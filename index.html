@@ -1291,24 +1291,24 @@
                                             className={`kanban-card cursor-pointer ${draggedTask?.id === task.id ? 'card-dragging' : ''}`}
                                         >
                                             <div className="font-600 text-sm mb-2">{task.title}</div>
-                                            {task.owner && <div className="text-xs text-gray-600 mb-1">👤 {task.owner}</div>}
+                                            {task.owner && <div className="text-xs text-gray-600 mb-1">{task.owner}</div>}
                                             <div className={`text-xs font-600 mb-2 ${getPriorityClass(task.priority)}`}>
-                                                {task.priority ? '◆ ' + task.priority : ''}
+                                                {task.priority || ''}
                                             </div>
                                             {task.dueDate && (
                                                 <div className={`text-xs mb-2 ${isOverdue(task.dueDate) ? 'overdue' : 'text-gray-600'}`}>
-                                                    {isOverdue(task.dueDate) && '⚠️ OVERDUE - '}
+                                                    {isOverdue(task.dueDate) && 'OVERDUE - '}
                                                     {formatDate(task.dueDate)}
                                                 </div>
                                             )}
                                             {task.relatedPartner && (
                                                 <div className="text-xs text-purple-600 mb-1">
-                                                    🤝 {getPartnerName(task.relatedPartner)}
+                                                    {getPartnerName(task.relatedPartner)}
                                                 </div>
                                             )}
                                             {task.relatedProblem && (
                                                 <div className="text-xs text-blue-600">
-                                                    🎯 {getProblemTitle(task.relatedProblem)}
+                                                    {getProblemTitle(task.relatedProblem)}
                                                 </div>
                                             )}
                                         </div>
@@ -1338,22 +1338,22 @@
                         <div className="font-600">{partner.name}</div>
                         {partner.risk && <div className={getPriorityBadgeClass(partner.risk)}>{normalizePartnerPriority(partner.risk)}</div>}
                     </div>
-                    {partner.contact && <div className="text-sm text-gray-600 mb-2">📞 {partner.contact}</div>}
+                    {partner.contact && <div className="text-sm text-gray-600 mb-2">{partner.contact}</div>}
                     <div className="flex gap-4 text-xs mb-3">
                         <div className="flex items-center gap-1">
                             <span className={partner.problemBrief ? 'text-green-600' : 'text-gray-400'}>
-                                {partner.problemBrief ? '✓' : '○'} Brief
+                                Brief
                             </span>
                         </div>
                         <div className="flex items-center gap-1">
                             <span className={partner.dataShared ? 'text-green-600' : 'text-gray-400'}>
-                                {partner.dataShared ? '✓' : '○'} Data
+                                Data
                             </span>
                         </div>
                     </div>
                     {partner.followUpDate && (
                         <div className={`text-xs ${isOverdue(partner.followUpDate) ? 'overdue' : 'text-gray-600'}`}>
-                            {isOverdue(partner.followUpDate) && '⚠️ OVERDUE - '}
+                            {isOverdue(partner.followUpDate) && 'OVERDUE - '}
                             Follow-up: {formatDate(partner.followUpDate)}
                         </div>
                     )}
@@ -1374,11 +1374,11 @@
             };
 
             const getDataStatusBadge = (status) => {
-                if (status === 'Ready') return '✓ Ready';
-                if (status === 'In Progress') return '⟳ In Progress';
-                if (status === 'Available') return '✓ Available';
-                if (status === 'Awaiting Approval') return '⏳ Awaiting';
-                return '✗ Not Ready';
+                if (status === 'Ready') return 'Ready';
+                if (status === 'In Progress') return 'In Progress';
+                if (status === 'Available') return 'Available';
+                if (status === 'Awaiting Approval') return 'Awaiting';
+                return 'Not Ready';
             };
 
             return (
@@ -1880,7 +1880,7 @@
                                                     <div>
                                                         <div className="font-600 text-sm">{deadline.title}</div>
                                                         <div className={`text-xs ${deadline.isOverdue ? 'overdue' : 'text-gray-600'}`}>
-                                                            {deadline.isOverdue ? '⚠️ OVERDUE - ' : ''}
+                                                            {deadline.isOverdue ? 'OVERDUE - ' : ''}
                                                             {formatDate(deadline.date)}
                                                         </div>
                                                     </div>
@@ -1896,30 +1896,30 @@
                                 <h2 className="section-title">CURRENT RISKS</h2>
                                 <div className="card p-4">
                                     {highRiskPartners.length + blockedTasks.length + blockedProblems.length + overdueTasks.length === 0 ? (
-                                        <div className="text-green-600 font-600 text-sm">✓ No critical risks</div>
+                                        <div className="text-green-600 font-600 text-sm">No critical risks</div>
                                     ) : (
                                         <div className="space-y-3">
                                             {highRiskPartners.map(p => (
                                                 <div key={p.id} className="text-xs">
-                                                    <div className="font-600 text-red-600">🤝 {p.name}</div>
+                                                    <div className="font-600 text-red-600">{p.name}</div>
                                                     <div className="text-gray-600">Must-Have partner</div>
                                                 </div>
                                             ))}
                                             {blockedTasks.map(t => (
                                                 <div key={t.id} className="text-xs">
-                                                    <div className="font-600 text-red-600">🚫 {t.title}</div>
+                                                    <div className="font-600 text-red-600">{t.title}</div>
                                                     <div className="text-gray-600">Blocked task</div>
                                                 </div>
                                             ))}
                                             {blockedProblems.map(p => (
                                                 <div key={p.id} className="text-xs">
-                                                    <div className="font-600 text-orange-600">⚠️ {p.title}</div>
+                                                    <div className="font-600 text-orange-600">{p.title}</div>
                                                     <div className="text-gray-600">Blocked problem</div>
                                                 </div>
                                             ))}
                                             {overdueTasks.slice(0, 2).map(t => (
                                                 <div key={t.id} className="text-xs">
-                                                    <div className="font-600 text-red-600">📅 {t.title}</div>
+                                                    <div className="font-600 text-red-600">{t.title}</div>
                                                     <div className="text-gray-600">Overdue</div>
                                                 </div>
                                             ))}
