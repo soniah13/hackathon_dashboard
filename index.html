@@ -230,6 +230,19 @@
             letter-spacing: 0.5px;
         }
 
+        .resource-number {
+            width: 96px;
+            padding: 2px 4px;
+            border: 1px solid transparent;
+            background: transparent;
+        }
+
+        .resource-number:hover,
+        .resource-number:focus {
+            border-color: #E5E5E0;
+            background: white;
+        }
+
         *, *::before, *::after {
             box-sizing: border-box;
         }
@@ -335,6 +348,16 @@
 
             .card.p-6 {
                 padding: 16px;
+            }
+
+            .flex.justify-between.items-center.mb-4 {
+                align-items: flex-start;
+                flex-direction: column;
+                gap: 10px;
+            }
+
+            .flex.justify-between.items-center.mb-4 .btn {
+                width: 100%;
             }
 
             .card.p-4.flex.gap-4.items-center {
@@ -1862,7 +1885,10 @@
 
                         {/* Budget */}
                         <div className="mb-8">
-                            <h2 className="section-title">WORKING BUDGET & RESOURCE ALLOCATION</h2>
+                            <div className="flex justify-between items-center mb-4">
+                                <h2 className="section-title mb-0">WORKING BUDGET & RESOURCE ALLOCATION</h2>
+                                <button onClick={() => setAddBudgetOpen(true)} className="btn btn-primary">+ Add Budget Item</button>
+                            </div>
                             <div className="card overflow-x-auto">
                                 <table>
                                     <thead>
@@ -1874,6 +1900,7 @@
                                             <th>Variance</th>
                                             <th>Funding Source</th>
                                             <th>Status</th>
+                                            <th>Actions</th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -1889,6 +1916,17 @@
                                                     <span className={`status-badge ${item.status === 'Planned' ? 'status-draft' : item.status === 'Paid' ? 'status-ready' : 'status-in-progress'}`}>
                                                         {item.status}
                                                     </span>
+                                                </td>
+                                                <td>
+                                                    <button
+                                                        onClick={() => {
+                                                            setEditingBudget(item);
+                                                            setEditBudgetOpen(true);
+                                                        }}
+                                                        className="btn btn-secondary"
+                                                    >
+                                                        Edit
+                                                    </button>
                                                 </td>
                                             </tr>
                                         ))}
@@ -1923,11 +1961,11 @@
                                     <div className="text-sm font-600 mb-4">Technical Mentors</div>
                                     <div className="flex justify-between items-center mb-3">
                                         <div>
-                                            <div className="text-2xl font-bold">{resources.technicalMentorsConfirmed}</div>
+                                            <input type="number" min="0" value={resources.technicalMentorsConfirmed} onChange={(e) => handleResourceChange('technicalMentorsConfirmed', e.target.value)} className="resource-number text-2xl font-bold" aria-label="Confirmed technical mentors" />
                                             <div className="text-xs text-gray-600">Confirmed</div>
                                         </div>
                                         <div className="text-right">
-                                            <div className="text-2xl font-bold text-gray-400">{resources.technicalMentorsRequired}</div>
+                                            <input type="number" min="0" value={resources.technicalMentorsRequired} onChange={(e) => handleResourceChange('technicalMentorsRequired', e.target.value)} className="resource-number text-2xl font-bold text-gray-400 text-right" aria-label="Required technical mentors" />
                                             <div className="text-xs text-gray-600">Required</div>
                                         </div>
                                     </div>
@@ -1939,11 +1977,11 @@
                                     <div className="text-sm font-600 mb-4">Judges</div>
                                     <div className="flex justify-between items-center mb-3">
                                         <div>
-                                            <div className="text-2xl font-bold">{resources.judgesConfirmed}</div>
+                                            <input type="number" min="0" value={resources.judgesConfirmed} onChange={(e) => handleResourceChange('judgesConfirmed', e.target.value)} className="resource-number text-2xl font-bold" aria-label="Confirmed judges" />
                                             <div className="text-xs text-gray-600">Confirmed</div>
                                         </div>
                                         <div className="text-right">
-                                            <div className="text-2xl font-bold text-gray-400">{resources.judgesRequired}</div>
+                                            <input type="number" min="0" value={resources.judgesRequired} onChange={(e) => handleResourceChange('judgesRequired', e.target.value)} className="resource-number text-2xl font-bold text-gray-400 text-right" aria-label="Required judges" />
                                             <div className="text-xs text-gray-600">Required</div>
                                         </div>
                                     </div>
@@ -1955,11 +1993,11 @@
                                     <div className="text-sm font-600 mb-4">Participants</div>
                                     <div className="flex justify-between items-center mb-3">
                                         <div>
-                                            <div className="text-2xl font-bold">{resources.participantsRegistered}</div>
+                                            <input type="number" min="0" value={resources.participantsRegistered} onChange={(e) => handleResourceChange('participantsRegistered', e.target.value)} className="resource-number text-2xl font-bold" aria-label="Registered participants" />
                                             <div className="text-xs text-gray-600">Registered</div>
                                         </div>
                                         <div className="text-right">
-                                            <div className="text-2xl font-bold text-gray-400">{resources.participantsTarget}+</div>
+                                            <input type="number" min="0" value={resources.participantsTarget} onChange={(e) => handleResourceChange('participantsTarget', e.target.value)} className="resource-number text-2xl font-bold text-gray-400 text-right" aria-label="Target participants" />
                                             <div className="text-xs text-gray-600">Target</div>
                                         </div>
                                     </div>
@@ -1978,7 +2016,8 @@
                     <EditTaskModal isOpen={editTaskOpen} onClose={() => setEditTaskOpen(false)} task={editingTask} onUpdate={handleUpdateTask} onDelete={handleDeleteTask} problems={problems} partners={partners} />
                     <AddProblemModal isOpen={addProblemOpen} onClose={() => setAddProblemOpen(false)} onAdd={handleAddProblem} />
                     <EditProblemModal isOpen={editProblemOpen} onClose={() => setEditProblemOpen(false)} problem={editingProblem} onUpdate={handleUpdateProblem} onDelete={handleDeleteProblem} />
-                    <AddBudgetModal isOpen={addBudgetOpen} onClose={() => setAddBudgetOpen(false)} onAdd={handleAddBudget} />
+                    <BudgetModal isOpen={addBudgetOpen} onClose={() => setAddBudgetOpen(false)} onSave={handleAddBudget} onDelete={handleDeleteBudget} />
+                    <BudgetModal isOpen={editBudgetOpen} onClose={() => setEditBudgetOpen(false)} budgetItem={editingBudget} onSave={handleUpdateBudget} onDelete={handleDeleteBudget} />
                 </div>
             );
         };
