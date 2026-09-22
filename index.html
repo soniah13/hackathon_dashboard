@@ -1,0 +1,1803 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Zindua Hackathon Master Planning Hub</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/react.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/react-dom.min.js"></script>
+ 
+<script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+<script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <link href="./dist/output.css" rel="stylesheet">
+    <style>
+        :root {
+            --bg-primary: #F7F7F5;
+            --text-primary: #171717;
+            --accent: #E11D48;
+            --warning: #F59E0B;
+            --success: #16A34A;
+            --data: #2563EB;
+            --partner: #7C3AED;
+            --neutral: #6B7280;
+        }
+
+        body {
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+        }
+
+        .card {
+            background: white;
+            border: 1px solid #E5E5E0;
+            border-radius: 6px;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+        }
+
+        .card-dragging {
+            opacity: 0.5;
+        }
+
+        .dropzone-active {
+            border: 2px dashed var(--accent);
+            background-color: rgba(225, 29, 72, 0.04);
+        }
+
+        .priority-critical { color: var(--accent); }
+        .priority-high { color: var(--warning); }
+        .priority-medium { color: var(--data); }
+        .priority-low { color: var(--neutral); }
+
+        .status-badge {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .status-draft { background: #f3f4f6; color: #4b5563; }
+        .status-in-progress { background: #dbeafe; color: #0c4a6e; }
+        .status-ready { background: #dcfce7; color: #14532d; }
+        .status-blocked { background: #fee2e2; color: #7f1d1d; }
+
+        .kanban-column {
+            flex: 0 0 280px;
+            background: #f9fafb;
+            border: 1px solid #e5e5e0;
+            border-radius: 6px;
+            padding: 12px;
+            min-height: 400px;
+        }
+
+        .kanban-card {
+            background: white;
+            border: 1px solid #e5e5e0;
+            border-radius: 4px;
+            padding: 12px;
+            margin-bottom: 8px;
+            cursor: grab;
+            transition: all 0.2s;
+        }
+
+        .kanban-card:active {
+            cursor: grabbing;
+        }
+
+        .kanban-card:hover {
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+        }
+
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+
+        .modal {
+            background: white;
+            border-radius: 8px;
+            padding: 24px;
+            max-width: 500px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+            box-shadow: 0 20px 25px rgba(0, 0, 0, 0.15);
+        }
+
+        .overdue {
+            color: var(--accent);
+            font-weight: 600;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #e5e5e0;
+        }
+
+        th {
+            background: #f9fafb;
+            font-weight: 600;
+            font-size: 13px;
+        }
+
+        input, select, textarea {
+            width: 100%;
+            padding: 8px 12px;
+            border: 1px solid #e5e5e0;
+            border-radius: 4px;
+            font-family: inherit;
+            font-size: 14px;
+        }
+
+        input:focus, select:focus, textarea:focus {
+            outline: none;
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px rgba(225, 29, 72, 0.1);
+        }
+
+        .btn {
+            padding: 8px 16px;
+            border-radius: 4px;
+            border: none;
+            cursor: pointer;
+            font-weight: 500;
+            font-size: 14px;
+            transition: all 0.2s;
+        }
+
+        .btn-primary {
+            background: var(--accent);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #be123c;
+        }
+
+        .btn-secondary {
+            background: #f3f4f6;
+            color: var(--text-primary);
+        }
+
+        .btn-secondary:hover {
+            background: #e5e7eb;
+        }
+
+        .btn-danger {
+            background: #fee2e2;
+            color: #dc2626;
+        }
+
+        .btn-danger:hover {
+            background: #fecaca;
+        }
+
+        .badge-risk-high {
+            background: #fee2e2;
+            color: #dc2626;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: 600;
+        }
+
+        .badge-risk-medium {
+            background: #fef3c7;
+            color: #d97706;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: 600;
+        }
+
+        .badge-risk-low {
+            background: #dcfce7;
+            color: #16a34a;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: 600;
+        }
+
+        .section-title {
+            font-size: 18px;
+            font-weight: 700;
+            margin-bottom: 16px;
+            color: var(--text-primary);
+        }
+
+        .status-label {
+            font-weight: 600;
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+    </style>
+</head>
+<body>
+    <h1 class="text-2xl text-red-600 font-bold p-4">If you can see this, HTML is working!</h1>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect, useContext, createContext, useCallback } = React;
+
+        // Persistent state hook
+        const usePersistentState = (key, initialValue) => {
+            const [state, setState] = useState(() => {
+                try {
+                    const stored = localStorage.getItem(key);
+                    return stored ? JSON.parse(stored) : initialValue;
+                } catch {
+                    return initialValue;
+                }
+            });
+
+            const setPersistentState = useCallback((value) => {
+                setState(value);
+                localStorage.setItem(key, JSON.stringify(value));
+            }, [key]);
+
+            return [state, setPersistentState];
+        };
+
+        // Utility functions
+        const formatDate = (date) => {
+            if (!date) return '';
+            return new Date(date).toLocaleDateString('en-GB', { 
+                year: 'numeric', 
+                month: 'short', 
+                day: 'numeric' 
+            });
+        };
+
+        const isOverdue = (date) => {
+            if (!date) return false;
+            return new Date(date) < new Date() && new Date(date).toDateString() !== new Date().toDateString();
+        };
+
+        const daysUntilHackathon = () => {
+            const hackathonDate = new Date('2026-11-07');
+            const today = new Date();
+            const diff = hackathonDate - today;
+            const days = Math.ceil(diff / (1000 * 60 * 60 * 24));
+            return Math.max(0, days);
+        };
+
+        // Modal Component
+        const Modal = ({ isOpen, onClose, title, children }) => {
+            if (!isOpen) return null;
+            return (
+                <div className="modal-overlay" onClick={onClose}>
+                    <div className="modal" onClick={(e) => e.stopPropagation()}>
+                        <div className="flex justify-between items-center mb-6">
+                            <h2 className="text-xl font-bold">{title}</h2>
+                            <button onClick={onClose} className="text-2xl text-gray-400 hover:text-gray-600">&times;</button>
+                        </div>
+                        {children}
+                    </div>
+                </div>
+            );
+        };
+
+        // Add Partner Modal
+        const AddPartnerModal = ({ isOpen, onClose, onAdd }) => {
+            const [formData, setFormData] = useState({
+                name: '',
+                contact: '',
+                status: 'TO CONTACT',
+                problemBrief: false,
+                dataShared: false,
+                lastContact: '',
+                followUpDate: '',
+                risk: 'Low',
+                notes: ''
+            });
+
+            const handleChange = (e) => {
+                const { name, value, type, checked } = e.target;
+                setFormData(prev => ({
+                    ...prev,
+                    [name]: type === 'checkbox' ? checked : value
+                }));
+            };
+
+            const handleSubmit = (e) => {
+                e.preventDefault();
+                if (formData.name.trim()) {
+                    onAdd(formData);
+                    setFormData({
+                        name: '',
+                        contact: '',
+                        status: 'TO CONTACT',
+                        problemBrief: false,
+                        dataShared: false,
+                        lastContact: '',
+                        followUpDate: '',
+                        risk: 'Low',
+                        notes: ''
+                    });
+                    onClose();
+                }
+            };
+
+            return (
+                <Modal isOpen={isOpen} onClose={onClose} title="Add Partner">
+                    <form onSubmit={handleSubmit} className="space-y-4">
+                        <div>
+                            <label className="block text-sm font-600 mb-2">Partner Name</label>
+                            <input type="text" name="name" value={formData.name} onChange={handleChange} required />
+                        </div>
+                        <div>
+                            <label className="block text-sm font-600 mb-2">Contact Person</label>
+                            <input type="text" name="contact" value={formData.contact} onChange={handleChange} />
+                        </div>
+                        <div>
+                            <label className="block text-sm font-600 mb-2">Status</label>
+                            <select name="status" value={formData.status} onChange={handleChange}>
+                                <option>TO CONTACT</option>
+                                <option>CONTACTED / AWAITING REPLY</option>
+                                <option>IN DISCUSSIONS</option>
+                                <option>AT RISK / BACKUP</option>
+                            </select>
+                        </div>
+                        <div className="flex gap-4">
+                            <label className="flex items-center gap-2">
+                                <input type="checkbox" name="problemBrief" checked={formData.problemBrief} onChange={handleChange} />
+                                <span className="text-sm">Problem Brief Provided</span>
+                            </label>
+                            <label className="flex items-center gap-2">
+                                <input type="checkbox" name="dataShared" checked={formData.dataShared} onChange={handleChange} />
+                                <span className="text-sm">Data Shared</span>
+                            </label>
+                        </div>
+                        <div>
+                            <label className="block text-sm font-600 mb-2">Last Contact</label>
+                            <input type="date" name="lastContact" value={formData.lastContact} onChange={handleChange} />
+                        </div>
+                        <div>
+                            <label className="block text-sm font-600 mb-2">Follow-up Date</label>
+                            <input type="date" name="followUpDate" value={formData.followUpDate} onChange={handleChange} />
+                        </div>
+                        <div>
+                            <label className="block text-sm font-600 mb-2">Risk Level</label>
+                            <select name="risk" value={formData.risk} onChange={handleChange}>
+                                <option>Low</option>
+                                <option>Medium</option>
+                                <option>High</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label className="block text-sm font-600 mb-2">Notes</label>
+                            <textarea name="notes" value={formData.notes} onChange={handleChange} rows="3"></textarea>
+                        </div>
+                        <div className="flex gap-3 pt-4">
+                            <button type="submit" className="btn btn-primary flex-1">Add Partner</button>
+                            <button type="button" onClick={onClose} className="btn btn-secondary flex-1">Cancel</button>
+                        </div>
+                    </form>
+                </Modal>
+            );
+        };
+
+        // Edit Partner Modal
+        const EditPartnerModal = ({ isOpen, onClose, partner, onUpdate, onDelete }) => {
+            const [formData, setFormData] = useState(partner || {});
+
+            useEffect(() => {
+                setFormData(partner || {});
+            }, [partner]);
+
+            const handleChange = (e) => {
+                const { name, value, type, checked } = e.target;
+                setFormData(prev => ({
+                    ...prev,
+                    [name]: type === 'checkbox' ? checked : value
+                }));
+            };
+
+            const handleSubmit = (e) => {
+                e.preventDefault();
+                onUpdate(formData);
+                onClose();
+            };
+
+            const handleDelete = () => {
+                if (confirm('Are you sure you want to delete this partner?')) {
+                    onDelete(formData.id);
+                    onClose();
+                }
+            };
+
+            return (
+                <Modal isOpen={isOpen} onClose={onClose} title="Edit Partner">
+                    <form onSubmit={handleSubmit} className="space-y-4">
+                        <div>
+                            <label className="block text-sm font-600 mb-2">Partner Name</label>
+                            <input type="text" name="name" value={formData.name || ''} onChange={handleChange} />
+                        </div>
+                        <div>
+                            <label className="block text-sm font-600 mb-2">Contact Person</label>
+                            <input type="text" name="contact" value={formData.contact || ''} onChange={handleChange} />
+                        </div>
+                        <div>
+                            <label className="block text-sm font-600 mb-2">Status</label>
+                            <select name="status" value={formData.status || ''} onChange={handleChange}>
+                                <option>TO CONTACT</option>
+                                <option>CONTACTED / AWAITING REPLY</option>
+                                <option>IN DISCUSSIONS</option>
+                                <option>AT RISK / BACKUP</option>
+                            </select>
+                        </div>
+                        <div className="flex gap-4">
+                            <label className="flex items-center gap-2">
+                                <input type="checkbox" name="problemBrief" checked={formData.problemBrief || false} onChange={handleChange} />
+                                <span className="text-sm">Problem Brief Provided</span>
+                            </label>
+                            <label className="flex items-center gap-2">
+                                <input type="checkbox" name="dataShared" checked={formData.dataShared || false} onChange={handleChange} />
+                                <span className="text-sm">Data Shared</span>
+                            </label>
+                        </div>
+                        <div>
+                            <label className="block text-sm font-600 mb-2">Last Contact</label>
+                            <input type="date" name="lastContact" value={formData.lastContact || ''} onChange={handleChange} />
+                        </div>
+                        <div>
+                            <label className="block text-sm font-600 mb-2">Follow-up Date</label>
+                            <input type="date" name="followUpDate" value={formData.followUpDate || ''} onChange={handleChange} />
+                        </div>
+                        <div>
+                            <label className="block text-sm font-600 mb-2">Risk Level</label>
+                            <select name="risk" value={formData.risk || ''} onChange={handleChange}>
+                                <option>Low</option>
+                                <option>Medium</option>
+                                <option>High</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label className="block text-sm font-600 mb-2">Notes</label>
+                            <textarea name="notes" value={formData.notes || ''} onChange={handleChange} rows="3"></textarea>
+                        </div>
+                        <div className="flex gap-3 pt-4">
+                            <button type="submit" className="btn btn-primary flex-1">Update Partner</button>
+                            <button type="button" onClick={handleDelete} className="btn btn-danger flex-1">Delete</button>
+                            <button type="button" onClick={onClose} className="btn btn-secondary flex-1">Cancel</button>
+                        </div>
+                    </form>
+                </Modal>
+            );
+        };
+
+        // Add Task Modal
+        const AddTaskModal = ({ isOpen, onClose, onAdd, problems, partners }) => {
+            const [formData, setFormData] = useState({
+                title: '',
+                owner: '',
+                workstream: 'Partnerships',
+                dueDate: '',
+                priority: 'Medium',
+                status: 'TO DO — THIS WEEK',
+                description: '',
+                relatedPartner: '',
+                relatedProblem: '',
+                notes: ''
+            });
+
+            const handleChange = (e) => {
+                const { name, value } = e.target;
+                setFormData(prev => ({ ...prev, [name]: value }));
+            };
+
+            const handleSubmit = (e) => {
+                e.preventDefault();
+                if (formData.title.trim()) {
+                    onAdd(formData);
+                    setFormData({
+                        title: '',
+                        owner: '',
+                        workstream: 'Partnerships',
+                        dueDate: '',
+                        priority: 'Medium',
+                        status: 'TO DO — THIS WEEK',
+                        description: '',
+                        relatedPartner: '',
+                        relatedProblem: '',
+                        notes: ''
+                    });
+                    onClose();
+                }
+            };
+
+            return (
+                <Modal isOpen={isOpen} onClose={onClose} title="Add Task">
+                    <form onSubmit={handleSubmit} className="space-y-4">
+                        <div>
+                            <label className="block text-sm font-600 mb-2">Task Title</label>
+                            <input type="text" name="title" value={formData.title} onChange={handleChange} required />
+                        </div>
+                        <div>
+                            <label className="block text-sm font-600 mb-2">Owner</label>
+                            <input type="text" name="owner" value={formData.owner} onChange={handleChange} />
+                        </div>
+                        <div>
+                            <label className="block text-sm font-600 mb-2">Workstream</label>
+                            <select name="workstream" value={formData.workstream} onChange={handleChange}>
+                                <option>Partnerships</option>
+                                <option>Challenge Design</option>
+                                <option>Data</option>
+                                <option>Technical</option>
+                                <option>Operations</option>
+                                <option>Marketing</option>
+                                <option>Judging</option>
+                                <option>Budget</option>
+                                <option>Participant Management</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label className="block text-sm font-600 mb-2">Due Date</label>
+                            <input type="date" name="dueDate" value={formData.dueDate} onChange={handleChange} />
+                        </div>
+                        <div>
+                            <label className="block text-sm font-600 mb-2">Priority</label>
+                            <select name="priority" value={formData.priority} onChange={handleChange}>
+                                <option>Low</option>
+                                <option>Medium</option>
+                                <option>High</option>
+                                <option>Critical</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label className="block text-sm font-600 mb-2">Description</label>
+                            <textarea name="description" value={formData.description} onChange={handleChange} rows="3"></textarea>
+                        </div>
+                        <div>
+                            <label className="block text-sm font-600 mb-2">Related Partner</label>
+                            <select name="relatedPartner" value={formData.relatedPartner} onChange={handleChange}>
+                                <option value="">None</option>
+                                {partners.map(p => (
+                                    <option key={p.id} value={p.id}>{p.name}</option>
+                                ))}
+                            </select>
+                        </div>
+                        <div>
+                            <label className="block text-sm font-600 mb-2">Related Problem</label>
+                            <select name="relatedProblem" value={formData.relatedProblem} onChange={handleChange}>
+                                <option value="">None</option>
+                                {problems.map(p => (
+                                    <option key={p.id} value={p.id}>{p.title}</option>
+                                ))}
+                            </select>
+                        </div>
+                        <div>
+                            <label className="block text-sm font-600 mb-2">Notes</label>
+                            <textarea name="notes" value={formData.notes} onChange={handleChange} rows="2"></textarea>
+                        </div>
+                        <div className="flex gap-3 pt-4">
+                            <button type="submit" className="btn btn-primary flex-1">Add Task</button>
+                            <button type="button" onClick={onClose} className="btn btn-secondary flex-1">Cancel</button>
+                        </div>
+                    </form>
+                </Modal>
+            );
+        };
+
+        // Edit Task Modal
+        const EditTaskModal = ({ isOpen, onClose, task, onUpdate, onDelete, problems, partners }) => {
+            const [formData, setFormData] = useState(task || {});
+
+            useEffect(() => {
+                setFormData(task || {});
+            }, [task]);
+
+            const handleChange = (e) => {
+                const { name, value } = e.target;
+                setFormData(prev => ({ ...prev, [name]: value }));
+            };
+
+            const handleSubmit = (e) => {
+                e.preventDefault();
+                onUpdate(formData);
+                onClose();
+            };
+
+            const handleDelete = () => {
+                if (confirm('Are you sure you want to delete this task?')) {
+                    onDelete(formData.id);
+                    onClose();
+                }
+            };
+
+            return (
+                <Modal isOpen={isOpen} onClose={onClose} title="Edit Task">
+                    <form onSubmit={handleSubmit} className="space-y-4">
+                        <div>
+                            <label className="block text-sm font-600 mb-2">Task Title</label>
+                            <input type="text" name="title" value={formData.title || ''} onChange={handleChange} />
+                        </div>
+                        <div>
+                            <label className="block text-sm font-600 mb-2">Owner</label>
+                            <input type="text" name="owner" value={formData.owner || ''} onChange={handleChange} />
+                        </div>
+                        <div>
+                            <label className="block text-sm font-600 mb-2">Workstream</label>
+                            <select name="workstream" value={formData.workstream || ''} onChange={handleChange}>
+                                <option>Partnerships</option>
+                                <option>Challenge Design</option>
+                                <option>Data</option>
+                                <option>Technical</option>
+                                <option>Operations</option>
+                                <option>Marketing</option>
+                                <option>Judging</option>
+                                <option>Budget</option>
+                                <option>Participant Management</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label className="block text-sm font-600 mb-2">Due Date</label>
+                            <input type="date" name="dueDate" value={formData.dueDate || ''} onChange={handleChange} />
+                        </div>
+                        <div>
+                            <label className="block text-sm font-600 mb-2">Priority</label>
+                            <select name="priority" value={formData.priority || ''} onChange={handleChange}>
+                                <option>Low</option>
+                                <option>Medium</option>
+                                <option>High</option>
+                                <option>Critical</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label className="block text-sm font-600 mb-2">Status</label>
+                            <select name="status" value={formData.status || ''} onChange={handleChange}>
+                                <option>BACKLOG</option>
+                                <option>TO DO — THIS WEEK</option>
+                                <option>IN PROGRESS</option>
+                                <option>BLOCKED</option>
+                                <option>DONE</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label className="block text-sm font-600 mb-2">Description</label>
+                            <textarea name="description" value={formData.description || ''} onChange={handleChange} rows="3"></textarea>
+                        </div>
+                        <div>
+                            <label className="block text-sm font-600 mb-2">Related Partner</label>
+                            <select name="relatedPartner" value={formData.relatedPartner || ''} onChange={handleChange}>
+                                <option value="">None</option>
+                                {partners.map(p => (
+                                    <option key={p.id} value={p.id}>{p.name}</option>
+                                ))}
+                            </select>
+                        </div>
+                        <div>
+                            <label className="block text-sm font-600 mb-2">Related Problem</label>
+                            <select name="relatedProblem" value={formData.relatedProblem || ''} onChange={handleChange}>
+                                <option value="">None</option>
+                                {problems.map(p => (
+                                    <option key={p.id} value={p.id}>{p.title}</option>
+                                ))}
+                            </select>
+                        </div>
+                        <div>
+                            <label className="block text-sm font-600 mb-2">Notes</label>
+                            <textarea name="notes" value={formData.notes || ''} onChange={handleChange} rows="2"></textarea>
+                        </div>
+                        <div className="flex gap-3 pt-4">
+                            <button type="submit" className="btn btn-primary flex-1">Update Task</button>
+                            <button type="button" onClick={handleDelete} className="btn btn-danger flex-1">Delete</button>
+                            <button type="button" onClick={onClose} className="btn btn-secondary flex-1">Cancel</button>
+                        </div>
+                    </form>
+                </Modal>
+            );
+        };
+
+        // Add Problem Modal
+        const AddProblemModal = ({ isOpen, onClose, onAdd }) => {
+            const [formData, setFormData] = useState({
+                title: '',
+                owner: '',
+                organisation: '',
+                syntheticData: 'Not Started',
+                realData: 'Not Available',
+                softwareComponent: false,
+                dataScienceComponent: false,
+                validationContact: '',
+                status: 'Draft',
+                notes: ''
+            });
+
+            const handleChange = (e) => {
+                const { name, value, type, checked } = e.target;
+                setFormData(prev => ({
+                    ...prev,
+                    [name]: type === 'checkbox' ? checked : value
+                }));
+            };
+
+            const handleSubmit = (e) => {
+                e.preventDefault();
+                if (formData.title.trim()) {
+                    onAdd(formData);
+                    setFormData({
+                        title: '',
+                        owner: '',
+                        organisation: '',
+                        syntheticData: 'Not Started',
+                        realData: 'Not Available',
+                        softwareComponent: false,
+                        dataScienceComponent: false,
+                        validationContact: '',
+                        status: 'Draft',
+                        notes: ''
+                    });
+                    onClose();
+                }
+            };
+
+            return (
+                <Modal isOpen={isOpen} onClose={onClose} title="Add Problem Brief">
+                    <form onSubmit={handleSubmit} className="space-y-4">
+                        <div>
+                            <label className="block text-sm font-600 mb-2">Problem Title</label>
+                            <input type="text" name="title" value={formData.title} onChange={handleChange} required />
+                        </div>
+                        <div>
+                            <label className="block text-sm font-600 mb-2">Owner</label>
+                            <input type="text" name="owner" value={formData.owner} onChange={handleChange} />
+                        </div>
+                        <div>
+                            <label className="block text-sm font-600 mb-2">Organisation</label>
+                            <input type="text" name="organisation" value={formData.organisation} onChange={handleChange} />
+                        </div>
+                        <div>
+                            <label className="block text-sm font-600 mb-2">Synthetic Data Status</label>
+                            <select name="syntheticData" value={formData.syntheticData} onChange={handleChange}>
+                                <option>Not Started</option>
+                                <option>In Progress</option>
+                                <option>Ready</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label className="block text-sm font-600 mb-2">Real Data Status</label>
+                            <select name="realData" value={formData.realData} onChange={handleChange}>
+                                <option>Not Available</option>
+                                <option>Awaiting Approval</option>
+                                <option>Available</option>
+                            </select>
+                        </div>
+                        <div className="flex gap-4">
+                            <label className="flex items-center gap-2">
+                                <input type="checkbox" name="softwareComponent" checked={formData.softwareComponent} onChange={handleChange} />
+                                <span className="text-sm">Software Component</span>
+                            </label>
+                            <label className="flex items-center gap-2">
+                                <input type="checkbox" name="dataScienceComponent" checked={formData.dataScienceComponent} onChange={handleChange} />
+                                <span className="text-sm">Data Science Component</span>
+                            </label>
+                        </div>
+                        <div>
+                            <label className="block text-sm font-600 mb-2">Validation Contact</label>
+                            <input type="text" name="validationContact" value={formData.validationContact} onChange={handleChange} />
+                        </div>
+                        <div>
+                            <label className="block text-sm font-600 mb-2">Status</label>
+                            <select name="status" value={formData.status} onChange={handleChange}>
+                                <option>Draft</option>
+                                <option>Being Prepared</option>
+                                <option>Ready</option>
+                                <option>Blocked</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label className="block text-sm font-600 mb-2">Notes</label>
+                            <textarea name="notes" value={formData.notes} onChange={handleChange} rows="2"></textarea>
+                        </div>
+                        <div className="flex gap-3 pt-4">
+                            <button type="submit" className="btn btn-primary flex-1">Add Problem</button>
+                            <button type="button" onClick={onClose} className="btn btn-secondary flex-1">Cancel</button>
+                        </div>
+                    </form>
+                </Modal>
+            );
+        };
+
+        // Edit Problem Modal
+        const EditProblemModal = ({ isOpen, onClose, problem, onUpdate, onDelete }) => {
+            const [formData, setFormData] = useState(problem || {});
+
+            useEffect(() => {
+                setFormData(problem || {});
+            }, [problem]);
+
+            const handleChange = (e) => {
+                const { name, value, type, checked } = e.target;
+                setFormData(prev => ({
+                    ...prev,
+                    [name]: type === 'checkbox' ? checked : value
+                }));
+            };
+
+            const handleSubmit = (e) => {
+                e.preventDefault();
+                onUpdate(formData);
+                onClose();
+            };
+
+            const handleDelete = () => {
+                if (confirm('Are you sure you want to delete this problem?')) {
+                    onDelete(formData.id);
+                    onClose();
+                }
+            };
+
+            return (
+                <Modal isOpen={isOpen} onClose={onClose} title="Edit Problem Brief">
+                    <form onSubmit={handleSubmit} className="space-y-4">
+                        <div>
+                            <label className="block text-sm font-600 mb-2">Problem Title</label>
+                            <input type="text" name="title" value={formData.title || ''} onChange={handleChange} />
+                        </div>
+                        <div>
+                            <label className="block text-sm font-600 mb-2">Owner</label>
+                            <input type="text" name="owner" value={formData.owner || ''} onChange={handleChange} />
+                        </div>
+                        <div>
+                            <label className="block text-sm font-600 mb-2">Organisation</label>
+                            <input type="text" name="organisation" value={formData.organisation || ''} onChange={handleChange} />
+                        </div>
+                        <div>
+                            <label className="block text-sm font-600 mb-2">Synthetic Data Status</label>
+                            <select name="syntheticData" value={formData.syntheticData || ''} onChange={handleChange}>
+                                <option>Not Started</option>
+                                <option>In Progress</option>
+                                <option>Ready</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label className="block text-sm font-600 mb-2">Real Data Status</label>
+                            <select name="realData" value={formData.realData || ''} onChange={handleChange}>
+                                <option>Not Available</option>
+                                <option>Awaiting Approval</option>
+                                <option>Available</option>
+                            </select>
+                        </div>
+                        <div className="flex gap-4">
+                            <label className="flex items-center gap-2">
+                                <input type="checkbox" name="softwareComponent" checked={formData.softwareComponent || false} onChange={handleChange} />
+                                <span className="text-sm">Software Component</span>
+                            </label>
+                            <label className="flex items-center gap-2">
+                                <input type="checkbox" name="dataScienceComponent" checked={formData.dataScienceComponent || false} onChange={handleChange} />
+                                <span className="text-sm">Data Science Component</span>
+                            </label>
+                        </div>
+                        <div>
+                            <label className="block text-sm font-600 mb-2">Validation Contact</label>
+                            <input type="text" name="validationContact" value={formData.validationContact || ''} onChange={handleChange} />
+                        </div>
+                        <div>
+                            <label className="block text-sm font-600 mb-2">Status</label>
+                            <select name="status" value={formData.status || ''} onChange={handleChange}>
+                                <option>Draft</option>
+                                <option>Being Prepared</option>
+                                <option>Ready</option>
+                                <option>Blocked</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label className="block text-sm font-600 mb-2">Notes</label>
+                            <textarea name="notes" value={formData.notes || ''} onChange={handleChange} rows="2"></textarea>
+                        </div>
+                        <div className="flex gap-3 pt-4">
+                            <button type="submit" className="btn btn-primary flex-1">Update Problem</button>
+                            <button type="button" onClick={handleDelete} className="btn btn-danger flex-1">Delete</button>
+                            <button type="button" onClick={onClose} className="btn btn-secondary flex-1">Cancel</button>
+                        </div>
+                    </form>
+                </Modal>
+            );
+        };
+
+        // Add Budget Item Modal
+        const AddBudgetModal = ({ isOpen, onClose, onAdd }) => {
+            const [formData, setFormData] = useState({
+                category: 'Venue',
+                item: '',
+                estimated: '',
+                actual: '',
+                fundingSource: '',
+                status: 'Planned',
+                notes: ''
+            });
+
+            const handleChange = (e) => {
+                const { name, value } = e.target;
+                setFormData(prev => ({ ...prev, [name]: value }));
+            };
+
+            const handleSubmit = (e) => {
+                e.preventDefault();
+                if (formData.item.trim()) {
+                    onAdd(formData);
+                    setFormData({
+                        category: 'Venue',
+                        item: '',
+                        estimated: '',
+                        actual: '',
+                        fundingSource: '',
+                        status: 'Planned',
+                        notes: ''
+                    });
+                    onClose();
+                }
+            };
+
+            return (
+                <Modal isOpen={isOpen} onClose={onClose} title="Add Budget Item">
+                    <form onSubmit={handleSubmit} className="space-y-4">
+                        <div>
+                            <label className="block text-sm font-600 mb-2">Category</label>
+                            <select name="category" value={formData.category} onChange={handleChange}>
+                                <option>Venue</option>
+                                <option>Catering</option>
+                                <option>Prizes</option>
+                                <option>Swag</option>
+                                <option>Infrastructure</option>
+                                <option>Contingency</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label className="block text-sm font-600 mb-2">Item Description</label>
+                            <input type="text" name="item" value={formData.item} onChange={handleChange} required />
+                        </div>
+                        <div>
+                            <label className="block text-sm font-600 mb-2">Estimated Cost (KES)</label>
+                            <input type="number" name="estimated" value={formData.estimated} onChange={handleChange} />
+                        </div>
+                        <div>
+                            <label className="block text-sm font-600 mb-2">Actual Cost (KES)</label>
+                            <input type="number" name="actual" value={formData.actual} onChange={handleChange} />
+                        </div>
+                        <div>
+                            <label className="block text-sm font-600 mb-2">Funding Source</label>
+                            <input type="text" name="fundingSource" value={formData.fundingSource} onChange={handleChange} />
+                        </div>
+                        <div>
+                            <label className="block text-sm font-600 mb-2">Status</label>
+                            <select name="status" value={formData.status} onChange={handleChange}>
+                                <option>Planned</option>
+                                <option>Quoted</option>
+                                <option>Approved</option>
+                                <option>Paid</option>
+                                <option>Sponsored</option>
+                                <option>Cancelled</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label className="block text-sm font-600 mb-2">Notes</label>
+                            <textarea name="notes" value={formData.notes} onChange={handleChange} rows="2"></textarea>
+                        </div>
+                        <div className="flex gap-3 pt-4">
+                            <button type="submit" className="btn btn-primary flex-1">Add Item</button>
+                            <button type="button" onClick={onClose} className="btn btn-secondary flex-1">Cancel</button>
+                        </div>
+                    </form>
+                </Modal>
+            );
+        };
+
+        // Kanban Board
+        const KanbanBoard = ({ tasks, onTaskStatusChange, onEditTask, partners, problems }) => {
+            const statuses = ['BACKLOG', 'TO DO — THIS WEEK', 'IN PROGRESS', 'BLOCKED', 'DONE'];
+            const [draggedTask, setDraggedTask] = useState(null);
+
+            const handleDragStart = (e, task) => {
+                setDraggedTask(task);
+            };
+
+            const handleDragOver = (e) => {
+                e.preventDefault();
+            };
+
+            const handleDrop = (e, status) => {
+                e.preventDefault();
+                if (draggedTask) {
+                    onTaskStatusChange(draggedTask.id, status);
+                    setDraggedTask(null);
+                }
+            };
+
+            const getPartnerName = (id) => partners.find(p => p.id === id)?.name || '';
+            const getProblemTitle = (id) => problems.find(p => p.id === id)?.title || '';
+
+            const getTasksForStatus = (status) => tasks.filter(t => t.status === status);
+
+            const getPriorityClass = (priority) => {
+                switch (priority) {
+                    case 'Critical': return 'priority-critical';
+                    case 'High': return 'priority-high';
+                    case 'Medium': return 'priority-medium';
+                    case 'Low': return 'priority-low';
+                    default: return 'priority-low';
+                }
+            };
+
+            return (
+                <div className="overflow-x-auto pb-4">
+                    <div className="flex gap-4" style={{ minWidth: '100%' }}>
+                        {statuses.map(status => (
+                            <div
+                                key={status}
+                                className="kanban-column"
+                                onDragOver={handleDragOver}
+                                onDrop={(e) => handleDrop(e, status)}
+                            >
+                                <div className="font-600 text-sm mb-4 text-gray-700">{status}</div>
+                                <div className="space-y-2">
+                                    {getTasksForStatus(status).map(task => (
+                                        <div
+                                            key={task.id}
+                                            draggable
+                                            onDragStart={(e) => handleDragStart(e, task)}
+                                            onClick={() => onEditTask(task)}
+                                            className={`kanban-card cursor-pointer ${draggedTask?.id === task.id ? 'card-dragging' : ''}`}
+                                        >
+                                            <div className="font-600 text-sm mb-2">{task.title}</div>
+                                            {task.owner && <div className="text-xs text-gray-600 mb-1">👤 {task.owner}</div>}
+                                            <div className={`text-xs font-600 mb-2 ${getPriorityClass(task.priority)}`}>
+                                                {task.priority ? '◆ ' + task.priority : ''}
+                                            </div>
+                                            {task.dueDate && (
+                                                <div className={`text-xs mb-2 ${isOverdue(task.dueDate) ? 'overdue' : 'text-gray-600'}`}>
+                                                    {isOverdue(task.dueDate) && '⚠️ OVERDUE - '}
+                                                    {formatDate(task.dueDate)}
+                                                </div>
+                                            )}
+                                            {task.relatedPartner && (
+                                                <div className="text-xs text-purple-600 mb-1">
+                                                    🤝 {getPartnerName(task.relatedPartner)}
+                                                </div>
+                                            )}
+                                            {task.relatedProblem && (
+                                                <div className="text-xs text-blue-600">
+                                                    🎯 {getProblemTitle(task.relatedProblem)}
+                                                </div>
+                                            )}
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            );
+        };
+
+        // Partner Card
+        const PartnerCard = ({ partner, onEdit }) => {
+            const getRiskBadgeClass = (risk) => {
+                switch (risk) {
+                    case 'High': return 'badge-risk-high';
+                    case 'Medium': return 'badge-risk-medium';
+                    case 'Low': return 'badge-risk-low';
+                    default: return 'badge-risk-low';
+                }
+            };
+
+            return (
+                <div className="card p-4 cursor-pointer hover:shadow-md transition-shadow" onClick={() => onEdit(partner)}>
+                    <div className="flex justify-between items-start mb-3">
+                        <div className="font-600">{partner.name}</div>
+                        {partner.risk && <div className={getRiskBadgeClass(partner.risk)}>{partner.risk}</div>}
+                    </div>
+                    {partner.contact && <div className="text-sm text-gray-600 mb-2">📞 {partner.contact}</div>}
+                    <div className="flex gap-4 text-xs mb-3">
+                        <div className="flex items-center gap-1">
+                            <span className={partner.problemBrief ? 'text-green-600' : 'text-gray-400'}>
+                                {partner.problemBrief ? '✓' : '○'} Brief
+                            </span>
+                        </div>
+                        <div className="flex items-center gap-1">
+                            <span className={partner.dataShared ? 'text-green-600' : 'text-gray-400'}>
+                                {partner.dataShared ? '✓' : '○'} Data
+                            </span>
+                        </div>
+                    </div>
+                    {partner.followUpDate && (
+                        <div className={`text-xs ${isOverdue(partner.followUpDate) ? 'overdue' : 'text-gray-600'}`}>
+                            {isOverdue(partner.followUpDate) && '⚠️ OVERDUE - '}
+                            Follow-up: {formatDate(partner.followUpDate)}
+                        </div>
+                    )}
+                </div>
+            );
+        };
+
+        // Problem Card Component
+        const ProblemCard = ({ problem, onEdit }) => {
+            const getStatusClass = (status) => {
+                switch (status) {
+                    case 'Draft': return 'status-draft';
+                    case 'Being Prepared': return 'status-in-progress';
+                    case 'Ready': return 'status-ready';
+                    case 'Blocked': return 'status-blocked';
+                    default: return 'status-draft';
+                }
+            };
+
+            const getDataStatusBadge = (status) => {
+                if (status === 'Ready') return '✓ Ready';
+                if (status === 'In Progress') return '⟳ In Progress';
+                if (status === 'Available') return '✓ Available';
+                if (status === 'Awaiting Approval') return '⏳ Awaiting';
+                return '✗ Not Ready';
+            };
+
+            return (
+                <div className="card p-6 mb-4 cursor-pointer hover:shadow-md transition-shadow" onClick={() => onEdit(problem)}>
+                    <div className="flex justify-between items-start mb-3">
+                        <h3 className="font-600 flex-1">{problem.title}</h3>
+                        <span className={`status-badge ${getStatusClass(problem.status)}`}>
+                            {problem.status}
+                        </span>
+                    </div>
+                    {problem.owner && <div className="text-sm text-gray-600 mb-2">Owner: {problem.owner}</div>}
+                    {problem.organisation && <div className="text-sm text-gray-600 mb-3">Org: {problem.organisation}</div>}
+                    <div className="grid grid-cols-2 gap-3 mb-3">
+                        <div>
+                            <div className="text-xs font-600 text-gray-600 mb-1">Synthetic Data</div>
+                            <div className="text-sm">{getDataStatusBadge(problem.syntheticData)}</div>
+                        </div>
+                        <div>
+                            <div className="text-xs font-600 text-gray-600 mb-1">Real Data</div>
+                            <div className="text-sm">{getDataStatusBadge(problem.realData)}</div>
+                        </div>
+                    </div>
+                    <div className="flex gap-2 text-xs mb-2">
+                        {problem.softwareComponent && <span className="bg-blue-100 text-blue-700 px-2 py-1 rounded">Software</span>}
+                        {problem.dataScienceComponent && <span className="bg-purple-100 text-purple-700 px-2 py-1 rounded">Data Science</span>}
+                    </div>
+                    {problem.validationContact && <div className="text-xs text-gray-600">Validation: {problem.validationContact}</div>}
+                </div>
+            );
+        };
+
+        // Main App Component
+        const App = () => {
+            const [partners, setPartners] = usePersistentState('hackathon_partners', [
+                { id: '1', name: 'Sagini Contact 1', status: 'TO CONTACT', contact: '', problemBrief: false, dataShared: false, lastContact: '', followUpDate: '', risk: 'Low', notes: '' },
+                { id: '2', name: 'Sagini Contact 2', status: 'TO CONTACT', contact: '', problemBrief: false, dataShared: false, lastContact: '', followUpDate: '', risk: 'Low', notes: '' },
+                { id: '3', name: 'Sagini Contact 3', status: 'TO CONTACT', contact: '', problemBrief: false, dataShared: false, lastContact: '', followUpDate: '', risk: 'Low', notes: '' },
+                { id: '4', name: 'Additional Partner Prospect', status: 'TO CONTACT', contact: '', problemBrief: false, dataShared: false, lastContact: '', followUpDate: '', risk: 'Low', notes: '' },
+                { id: '5', name: 'Cursor', status: 'CONTACTED / AWAITING REPLY', contact: '', problemBrief: false, dataShared: false, lastContact: '', followUpDate: '', risk: 'Low', notes: '' },
+                { id: '6', name: 'Women in Tech Kenya', status: 'CONTACTED / AWAITING REPLY', contact: '', problemBrief: false, dataShared: false, lastContact: '', followUpDate: '', risk: 'Low', notes: '' },
+                { id: '7', name: 'Other Contacted Partner', status: 'CONTACTED / AWAITING REPLY', contact: '', problemBrief: false, dataShared: false, lastContact: '', followUpDate: '', risk: 'Low', notes: '' },
+                { id: '8', name: 'Vaj', status: 'IN DISCUSSIONS', contact: '', problemBrief: false, dataShared: false, lastContact: '', followUpDate: '', risk: 'Low', notes: '' },
+                { id: '9', name: 'GDG Nairobi', status: 'IN DISCUSSIONS', contact: '', problemBrief: false, dataShared: false, lastContact: '', followUpDate: '', risk: 'Low', notes: '' },
+                { id: '10', name: 'Casa AI', status: 'IN DISCUSSIONS', contact: '', problemBrief: false, dataShared: false, lastContact: '', followUpDate: '', risk: 'Low', notes: '' },
+                { id: '11', name: 'Remaining Tech', status: 'IN DISCUSSIONS', contact: '', problemBrief: false, dataShared: false, lastContact: '', followUpDate: '', risk: 'Low', notes: '' },
+                { id: '12', name: 'Africa\'s Talking', status: 'AT RISK / BACKUP', contact: '', problemBrief: false, dataShared: false, lastContact: '', followUpDate: '', risk: 'High', notes: '' },
+                { id: '13', name: 'Leopard', status: 'AT RISK / BACKUP', contact: '', problemBrief: false, dataShared: false, lastContact: '', followUpDate: '', risk: 'High', notes: '' },
+                { id: '14', name: 'SMS Lewa', status: 'AT RISK / BACKUP', contact: '', problemBrief: false, dataShared: false, lastContact: '', followUpDate: '', risk: 'High', notes: '' }
+            ]);
+
+            const [problems, setProblems] = usePersistentState('hackathon_problems', [
+                {
+                    id: '1',
+                    title: 'Lead Scoring',
+                    fullText: 'How can leads be scored according to their likelihood of converting so that teams can prioritise higher-potential leads?',
+                    owner: '',
+                    organisation: '',
+                    syntheticData: 'In Progress',
+                    realData: 'Awaiting Approval',
+                    softwareComponent: true,
+                    dataScienceComponent: true,
+                    validationContact: '',
+                    status: 'Being Prepared',
+                    notes: ''
+                },
+                {
+                    id: '2',
+                    title: 'Dropout Analysis',
+                    fullText: 'How can historical data be analysed to identify patterns associated with student or user dropout?',
+                    owner: '',
+                    organisation: '',
+                    syntheticData: 'Not Started',
+                    realData: 'Not Available',
+                    softwareComponent: true,
+                    dataScienceComponent: true,
+                    validationContact: '',
+                    status: 'Draft',
+                    notes: ''
+                },
+                {
+                    id: '3',
+                    title: 'Affiliate Tracking',
+                    fullText: 'How can affiliate activity and conversion performance be tracked and visualised effectively?',
+                    owner: '',
+                    organisation: '',
+                    syntheticData: 'Ready',
+                    realData: 'Available',
+                    softwareComponent: true,
+                    dataScienceComponent: false,
+                    validationContact: '',
+                    status: 'Ready',
+                    notes: ''
+                }
+            ]);
+
+            const [tasks, setTasks] = usePersistentState('hackathon_tasks', [
+                { id: '1', title: 'Contact Sagini\'s partner list', status: 'TO DO — THIS WEEK', owner: '', workstream: 'Partnerships', dueDate: '', priority: 'High', description: '', relatedPartner: '', relatedProblem: '', notes: '' },
+                { id: '2', title: 'Finalise challenge brief template', status: 'TO DO — THIS WEEK', owner: '', workstream: 'Challenge Design', dueDate: '', priority: 'High', description: '', relatedPartner: '', relatedProblem: '', notes: '' },
+                { id: '3', title: 'Confirm data requirements', status: 'TO DO — THIS WEEK', owner: '', workstream: 'Data', dueDate: '', priority: 'High', description: '', relatedPartner: '', relatedProblem: '', notes: '' },
+                { id: '4', title: 'Follow up GDG Nairobi', status: 'TO DO — THIS WEEK', owner: '', workstream: 'Partnerships', dueDate: '', priority: 'Medium', description: '', relatedPartner: '9', relatedProblem: '', notes: '' },
+                { id: '5', title: 'Follow up Casa AI', status: 'TO DO — THIS WEEK', owner: '', workstream: 'Partnerships', dueDate: '', priority: 'Medium', description: '', relatedPartner: '10', relatedProblem: '', notes: '' },
+                { id: '6', title: 'Follow up Remaining Tech', status: 'TO DO — THIS WEEK', owner: '', workstream: 'Partnerships', dueDate: '', priority: 'Medium', description: '', relatedPartner: '11', relatedProblem: '', notes: '' },
+                { id: '7', title: 'Follow up Africa\'s Talking', status: 'TO DO — THIS WEEK', owner: '', workstream: 'Partnerships', dueDate: '', priority: 'Medium', description: '', relatedPartner: '12', relatedProblem: '', notes: '' },
+                { id: '8', title: 'Create master budget tracker', status: 'TO DO — THIS WEEK', owner: '', workstream: 'Budget', dueDate: '', priority: 'High', description: '', relatedPartner: '', relatedProblem: '', notes: '' },
+                { id: '9', title: 'Problem-first challenge structure', status: 'IN PROGRESS', owner: '', workstream: 'Challenge Design', dueDate: '', priority: 'Critical', description: '', relatedPartner: '', relatedProblem: '', notes: '' },
+                { id: '10', title: 'Data Science integration', status: 'IN PROGRESS', owner: '', workstream: 'Technical', dueDate: '', priority: 'High', description: '', relatedPartner: '', relatedProblem: '', notes: '' },
+                { id: '11', title: 'Partner prospecting', status: 'IN PROGRESS', owner: '', workstream: 'Partnerships', dueDate: '', priority: 'High', description: '', relatedPartner: '', relatedProblem: '', notes: '' },
+                { id: '12', title: 'Africa\'s Talking partnership confirmation', status: 'BLOCKED', owner: '', workstream: 'Partnerships', dueDate: '', priority: 'Critical', description: '', relatedPartner: '12', relatedProblem: '', notes: '' },
+                { id: '13', title: 'Final partner challenge list', status: 'BLOCKED', owner: '', workstream: 'Challenge Design', dueDate: '', priority: 'High', description: '', relatedPartner: '', relatedProblem: '', notes: '' },
+                { id: '14', title: 'Final budget', status: 'BLOCKED', owner: '', workstream: 'Budget', dueDate: '', priority: 'Critical', description: '', relatedPartner: '', relatedProblem: '', notes: '' },
+                { id: '15', title: 'Confirm event date', status: 'DONE', owner: '', workstream: 'Operations', dueDate: '', priority: 'Low', description: '', relatedPartner: '', relatedProblem: '', notes: '' },
+                { id: '16', title: 'Confirm venue', status: 'DONE', owner: '', workstream: 'Operations', dueDate: '', priority: 'Low', description: '', relatedPartner: '', relatedProblem: '', notes: '' },
+                { id: '17', title: 'Define problem-first direction', status: 'DONE', owner: '', workstream: 'Challenge Design', dueDate: '', priority: 'Low', description: '', relatedPartner: '', relatedProblem: '', notes: '' },
+                { id: '18', title: 'Establish Software + Data collaboration model', status: 'DONE', owner: '', workstream: 'Technical', dueDate: '', priority: 'Low', description: '', relatedPartner: '', relatedProblem: '', notes: '' }
+            ]);
+
+            const [budget, setBudget] = usePersistentState('hackathon_budget', [
+                { id: '1', category: 'Venue', item: 'Venue/setup', estimated: '50000', actual: '', fundingSource: 'Zindua', status: 'Approved', notes: '' },
+                { id: '2', category: 'Catering', item: 'Breakfast', estimated: '30000', actual: '', fundingSource: 'Sponsors', status: 'Quoted', notes: '' },
+                { id: '3', category: 'Catering', item: 'Lunch', estimated: '50000', actual: '', fundingSource: 'Sponsors', status: 'Quoted', notes: '' },
+                { id: '4', category: 'Catering', item: 'Drinks/snacks', estimated: '20000', actual: '', fundingSource: 'Sponsors', status: 'Planned', notes: '' },
+                { id: '5', category: 'Prizes', item: 'Cash prizes', estimated: '150000', actual: '', fundingSource: 'Sponsors', status: 'Planned', notes: '' },
+                { id: '6', category: 'Swag', item: 'T-shirts', estimated: '60000', actual: '', fundingSource: 'Zindua', status: 'Quoted', notes: '' }
+            ]);
+
+            const [resources, setResources] = usePersistentState('hackathon_resources', {
+                technicalMentorsRequired: 10,
+                technicalMentorsConfirmed: 4,
+                judgesRequired: 5,
+                judgesConfirmed: 2,
+                partnersTarget: 15,
+                partnersConfirmed: 11,
+                teamsExpected: 30,
+                teamsConfirmed: 0,
+                participantsTarget: 120,
+                participantsRegistered: 0
+            });
+
+            const [searchTerm, setSearchTerm] = useState('');
+            const [addPartnerOpen, setAddPartnerOpen] = useState(false);
+            const [editPartnerOpen, setEditPartnerOpen] = useState(false);
+            const [editingPartner, setEditingPartner] = useState(null);
+            const [addTaskOpen, setAddTaskOpen] = useState(false);
+            const [editTaskOpen, setEditTaskOpen] = useState(false);
+            const [editingTask, setEditingTask] = useState(null);
+            const [addProblemOpen, setAddProblemOpen] = useState(false);
+            const [editProblemOpen, setEditProblemOpen] = useState(false);
+            const [editingProblem, setEditingProblem] = useState(null);
+            const [addBudgetOpen, setAddBudgetOpen] = useState(false);
+            const [taskFilter, setTaskFilter] = useState({
+                workstream: 'All',
+                priority: 'All',
+                owner: 'All',
+                due: 'All'
+            });
+
+            // Calculate metrics
+            const metrics = {
+                partnersInDiscussion: partners.filter(p => p.status === 'IN DISCUSSIONS').length,
+                problemsReady: problems.filter(p => p.status === 'Ready').length,
+                dataReady: problems.filter(p => p.syntheticData === 'Ready' || p.realData === 'Available').length,
+                tasksBlocked: tasks.filter(t => t.status === 'BLOCKED').length,
+                daysToHackathon: daysUntilHackathon()
+            };
+
+            const upcomingDeadlines = [
+                ...tasks.filter(t => t.dueDate).map(t => ({
+                    type: 'task',
+                    title: t.title,
+                    date: t.dueDate,
+                    isOverdue: isOverdue(t.dueDate)
+                })),
+                ...partners.filter(p => p.followUpDate).map(p => ({
+                    type: 'partner-followup',
+                    title: `Follow-up: ${p.name}`,
+                    date: p.followUpDate,
+                    isOverdue: isOverdue(p.followUpDate)
+                }))
+            ]
+            .sort((a, b) => new Date(a.date) - new Date(b.date))
+            .slice(0, 5);
+
+            const highRiskPartners = partners.filter(p => p.risk === 'High');
+            const blockedTasks = tasks.filter(t => t.status === 'BLOCKED');
+            const blockedProblems = problems.filter(p => p.status === 'Blocked');
+            const overdueTasks = tasks.filter(t => isOverdue(t.dueDate));
+
+            const filteredTasks = tasks.filter(t => {
+                if (taskFilter.workstream !== 'All' && t.workstream !== taskFilter.workstream) return false;
+                if (taskFilter.priority !== 'All' && t.priority !== taskFilter.priority) return false;
+                if (taskFilter.owner !== 'All' && t.owner !== taskFilter.owner) return false;
+                if (taskFilter.due === 'Overdue' && !isOverdue(t.dueDate)) return false;
+                if (taskFilter.due === 'This Week' && t.dueDate && (new Date(t.dueDate) - new Date() > 7 * 24 * 60 * 60 * 1000)) return false;
+                return true;
+            });
+
+            const totalEstimated = budget.reduce((sum, item) => sum + (parseFloat(item.estimated) || 0), 0);
+            const totalActual = budget.reduce((sum, item) => sum + (parseFloat(item.actual) || 0), 0);
+            const totalVariance = totalEstimated - totalActual;
+
+            // Handlers
+            const handleAddPartner = (data) => {
+                const newPartner = {
+                    id: Date.now().toString(),
+                    ...data
+                };
+                setPartners([...partners, newPartner]);
+            };
+
+            const handleUpdatePartner = (partner) => {
+                setPartners(partners.map(p => p.id === partner.id ? partner : p));
+                setEditingPartner(null);
+            };
+
+            const handleDeletePartner = (id) => {
+                setPartners(partners.filter(p => p.id !== id));
+            };
+
+            const handleAddTask = (data) => {
+                const newTask = {
+                    id: Date.now().toString(),
+                    ...data
+                };
+                setTasks([...tasks, newTask]);
+            };
+
+            const handleUpdateTask = (task) => {
+                setTasks(tasks.map(t => t.id === task.id ? task : t));
+                setEditingTask(null);
+            };
+
+            const handleDeleteTask = (id) => {
+                setTasks(tasks.filter(t => t.id !== id));
+            };
+
+            const handleTaskStatusChange = (id, status) => {
+                setTasks(tasks.map(t => t.id === id ? { ...t, status } : t));
+            };
+
+            const handleAddProblem = (data) => {
+                const newProblem = {
+                    id: Date.now().toString(),
+                    fullText: data.title,
+                    ...data
+                };
+                setProblems([...problems, newProblem]);
+            };
+
+            const handleUpdateProblem = (problem) => {
+                setProblems(problems.map(p => p.id === problem.id ? problem : p));
+                setEditingProblem(null);
+            };
+
+            const handleDeleteProblem = (id) => {
+                setProblems(problems.filter(p => p.id !== id));
+            };
+
+            const handleAddBudget = (data) => {
+                const newBudget = {
+                    id: Date.now().toString(),
+                    ...data
+                };
+                setBudget([...budget, newBudget]);
+            };
+
+            const handleExport = () => {
+                const exportData = {
+                    partners,
+                    problems,
+                    tasks,
+                    budget,
+                    resources,
+                    exportDate: new Date().toISOString()
+                };
+                const jsonString = JSON.stringify(exportData, null, 2);
+                const element = document.createElement('a');
+                element.href = 'data:text/json;charset=utf-8,' + encodeURIComponent(jsonString);
+                element.download = `hackathon-plan-${new Date().toISOString().split('T')[0]}.json`;
+                element.click();
+            };
+
+            return (
+                <div className="min-h-screen" style={{ backgroundColor: 'var(--bg-primary)' }}>
+                    {/* Header */}
+                    <header className="card m-4 p-6 mb-6">
+                        <div className="flex justify-between items-start mb-4">
+                            <div>
+                                <h1 className="text-3xl font-bold mb-1">Zindua Community Hackathon</h1>
+                                <h2 className="text-xl text-gray-600 mb-3">Master Planning Hub</h2>
+                                <div className="flex gap-4 items-center">
+                                    <div className="text-sm text-gray-600">Problem-First | Tech-Agnostic | 7 November 2026</div>
+                                    <span className="inline-block bg-red-100 text-red-700 px-3 py-1 text-xs font-600 rounded">
+                                        LIVE PLANNING
+                                    </span>
+                                </div>
+                            </div>
+                            <div className="flex gap-3">
+                                <button onClick={() => setAddTaskOpen(true)} className="btn btn-primary">+ Add Task</button>
+                                <button onClick={() => setAddPartnerOpen(true)} className="btn btn-primary">+ Add Partner</button>
+                                <button onClick={() => setAddProblemOpen(true)} className="btn btn-primary">+ Add Problem</button>
+                                <button onClick={() => setAddBudgetOpen(true)} className="btn btn-primary">+ Add Budget</button>
+                                <button onClick={handleExport} className="btn btn-secondary">Export</button>
+                            </div>
+                        </div>
+                        <div>
+                            <input
+                                type="text"
+                                placeholder="Search partners, tasks, problems..."
+                                value={searchTerm}
+                                onChange={(e) => setSearchTerm(e.target.value)}
+                                className="w-full max-w-md"
+                            />
+                        </div>
+                    </header>
+
+                    <div className="px-4 pb-8">
+                        {/* Live Status */}
+                        <div className="grid grid-cols-5 gap-4 mb-8">
+                            <div className="card p-4">
+                                <div className="text-xs text-gray-600 mb-1">Partners in Discussion</div>
+                                <div className="text-3xl font-bold text-purple-600">{metrics.partnersInDiscussion}</div>
+                            </div>
+                            <div className="card p-4">
+                                <div className="text-xs text-gray-600 mb-1">Problems Ready</div>
+                                <div className="text-3xl font-bold text-green-600">{metrics.problemsReady}</div>
+                            </div>
+                            <div className="card p-4">
+                                <div className="text-xs text-gray-600 mb-1">Data Ready</div>
+                                <div className="text-3xl font-bold text-blue-600">{metrics.dataReady}</div>
+                            </div>
+                            <div className="card p-4">
+                                <div className="text-xs text-gray-600 mb-1">Tasks Blocked</div>
+                                <div className="text-3xl font-bold text-red-600">{metrics.tasksBlocked}</div>
+                            </div>
+                            <div className="card p-4">
+                                <div className="text-xs text-gray-600 mb-1">Days to Hackathon</div>
+                                <div className="text-3xl font-bold text-gray-900">{metrics.daysToHackathon}</div>
+                            </div>
+                        </div>
+
+                        {/* Quick Reference */}
+                        <div className="mb-8">
+                            <h2 className="section-title">QUICK REFERENCE</h2>
+                            <div className="grid grid-cols-4 gap-4">
+                                <div className="card p-6">
+                                    <div className="text-xs font-600 text-gray-600 mb-2 uppercase">Event Date</div>
+                                    <div className="font-600 mb-1">Saturday, 7 November 2026</div>
+                                    <div className="text-sm text-gray-600">7:00 AM – 7:00 PM</div>
+                                    <div className="text-xs text-gray-500 mt-1">12-hour hackathon</div>
+                                </div>
+                                <div className="card p-6">
+                                    <div className="text-xs font-600 text-gray-600 mb-2 uppercase">Target</div>
+                                    <div className="font-600">120+ Builders</div>
+                                </div>
+                                <div className="card p-6">
+                                    <div className="text-xs font-600 text-gray-600 mb-2 uppercase">Venue</div>
+                                    <div className="font-600">Zindua HQ</div>
+                                    <div className="text-sm text-gray-600">Westlands</div>
+                                </div>
+                                <div className="card p-6">
+                                    <div className="text-xs font-600 text-gray-600 mb-2 uppercase">Operating Principle</div>
+                                    <div className="font-600">Problem-First</div>
+                                    <div className="text-xs text-gray-600 mt-1">Tech selected by problem</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Partner Pipeline */}
+                        <div className="mb-8">
+                            <h2 className="section-title">PARTNER PIPELINE</h2>
+                            <div className="grid grid-cols-4 gap-4">
+                                {['TO CONTACT', 'CONTACTED / AWAITING REPLY', 'IN DISCUSSIONS', 'AT RISK / BACKUP'].map(status => (
+                                    <div key={status}>
+                                        <div className="font-600 text-sm mb-4 text-gray-700 flex justify-between">
+                                            <span>{status === 'TO CONTACT' ? 'Sagini Contacts' : status}</span>
+                                            <span className="text-gray-500">{partners.filter(p => p.status === status).length}</span>
+                                        </div>
+                                        {status === 'IN DISCUSSIONS' && (
+                                            <div className="mb-3 px-3 py-2 bg-blue-50 border-l-2 border-blue-500 text-xs font-600 text-blue-700">
+                                                INITIAL DISCUSSION — NO FINAL AGREEMENT
+                                            </div>
+                                        )}
+                                        {status === 'AT RISK / BACKUP' && (
+                                            <div className="mb-3 px-3 py-2 bg-red-50 border-l-2 border-red-500 text-xs font-600 text-red-700">
+                                                AT RISK / BACKUP
+                                            </div>
+                                        )}
+                                        <div className="space-y-3">
+                                            {partners.filter(p => p.status === status).map(partner => (
+                                                <PartnerCard
+                                                    key={partner.id}
+                                                    partner={partner}
+                                                    onEdit={(p) => {
+                                                        setEditingPartner(p);
+                                                        setEditPartnerOpen(true);
+                                                    }}
+                                                />
+                                            ))}
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+
+                        {/* Problems */}
+                        <div className="mb-8">
+                            <h2 className="section-title">PROBLEM BRIEFS & DATA TRACKER</h2>
+                            {problems.map(problem => (
+                                <ProblemCard
+                                    key={problem.id}
+                                    problem={problem}
+                                    onEdit={(p) => {
+                                        setEditingProblem(p);
+                                        setEditProblemOpen(true);
+                                    }}
+                                />
+                            ))}
+                        </div>
+
+                        {/* Task Filtering */}
+                        <div className="mb-4">
+                            <h2 className="section-title">MASTER TASK BOARD</h2>
+                            <div className="card p-4 mb-4 flex gap-4 items-center">
+                                <select value={taskFilter.workstream} onChange={(e) => setTaskFilter({...taskFilter, workstream: e.target.value})} className="flex-1">
+                                    <option value="All">All Workstreams</option>
+                                    <option value="Partnerships">Partnerships</option>
+                                    <option value="Challenge Design">Challenge Design</option>
+                                    <option value="Data">Data</option>
+                                    <option value="Technical">Technical</option>
+                                    <option value="Operations">Operations</option>
+                                    <option value="Marketing">Marketing</option>
+                                    <option value="Judging">Judging</option>
+                                    <option value="Budget">Budget</option>
+                                    <option value="Participant Management">Participant Management</option>
+                                </select>
+                                <select value={taskFilter.priority} onChange={(e) => setTaskFilter({...taskFilter, priority: e.target.value})} className="flex-1">
+                                    <option value="All">All Priorities</option>
+                                    <option value="Low">Low</option>
+                                    <option value="Medium">Medium</option>
+                                    <option value="High">High</option>
+                                    <option value="Critical">Critical</option>
+                                </select>
+                                <button onClick={() => setTaskFilter({workstream: 'All', priority: 'All', owner: 'All', due: 'All'})} className="btn btn-secondary">
+                                    Clear Filters
+                                </button>
+                            </div>
+                        </div>
+
+                        {/* Kanban */}
+                        <div className="mb-8">
+                            <KanbanBoard
+                                tasks={filteredTasks}
+                                onTaskStatusChange={handleTaskStatusChange}
+                                onEditTask={(t) => {
+                                    setEditingTask(t);
+                                    setEditTaskOpen(true);
+                                }}
+                                partners={partners}
+                                problems={problems}
+                            />
+                        </div>
+
+                        {/* Upcoming Deadlines */}
+                        <div className="grid grid-cols-3 gap-4 mb-8">
+                            <div className="col-span-2">
+                                <h2 className="section-title">UPCOMING DEADLINES</h2>
+                                <div className="card p-4">
+                                    {upcomingDeadlines.length === 0 ? (
+                                        <div className="text-gray-600">No upcoming deadlines</div>
+                                    ) : (
+                                        <div className="space-y-3">
+                                            {upcomingDeadlines.map((deadline, i) => (
+                                                <div key={i} className="flex justify-between items-start p-3 border-b border-gray-200 last:border-b-0">
+                                                    <div>
+                                                        <div className="font-600 text-sm">{deadline.title}</div>
+                                                        <div className={`text-xs ${deadline.isOverdue ? 'overdue' : 'text-gray-600'}`}>
+                                                            {deadline.isOverdue ? '⚠️ OVERDUE - ' : ''}
+                                                            {formatDate(deadline.date)}
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+
+                            {/* Current Risks */}
+                            <div>
+                                <h2 className="section-title">CURRENT RISKS</h2>
+                                <div className="card p-4">
+                                    {highRiskPartners.length + blockedTasks.length + blockedProblems.length + overdueTasks.length === 0 ? (
+                                        <div className="text-green-600 font-600 text-sm">✓ No critical risks</div>
+                                    ) : (
+                                        <div className="space-y-3">
+                                            {highRiskPartners.map(p => (
+                                                <div key={p.id} className="text-xs">
+                                                    <div className="font-600 text-red-600">🤝 {p.name}</div>
+                                                    <div className="text-gray-600">High risk partner</div>
+                                                </div>
+                                            ))}
+                                            {blockedTasks.map(t => (
+                                                <div key={t.id} className="text-xs">
+                                                    <div className="font-600 text-red-600">🚫 {t.title}</div>
+                                                    <div className="text-gray-600">Blocked task</div>
+                                                </div>
+                                            ))}
+                                            {blockedProblems.map(p => (
+                                                <div key={p.id} className="text-xs">
+                                                    <div className="font-600 text-orange-600">⚠️ {p.title}</div>
+                                                    <div className="text-gray-600">Blocked problem</div>
+                                                </div>
+                                            ))}
+                                            {overdueTasks.slice(0, 2).map(t => (
+                                                <div key={t.id} className="text-xs">
+                                                    <div className="font-600 text-red-600">📅 {t.title}</div>
+                                                    <div className="text-gray-600">Overdue</div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Budget */}
+                        <div className="mb-8">
+                            <h2 className="section-title">WORKING BUDGET & RESOURCE ALLOCATION</h2>
+                            <div className="card overflow-x-auto">
+                                <table>
+                                    <thead>
+                                        <tr>
+                                            <th>Category</th>
+                                            <th>Item</th>
+                                            <th>Estimated (KES)</th>
+                                            <th>Actual (KES)</th>
+                                            <th>Variance</th>
+                                            <th>Funding Source</th>
+                                            <th>Status</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {budget.map(item => (
+                                            <tr key={item.id}>
+                                                <td className="text-sm">{item.category}</td>
+                                                <td className="text-sm">{item.item}</td>
+                                                <td className="text-sm">{parseFloat(item.estimated || 0).toLocaleString()}</td>
+                                                <td className="text-sm">{item.actual ? parseFloat(item.actual).toLocaleString() : '—'}</td>
+                                                <td className="text-sm">{item.actual ? (parseFloat(item.estimated || 0) - parseFloat(item.actual)).toLocaleString() : '—'}</td>
+                                                <td className="text-sm text-gray-600">{item.fundingSource}</td>
+                                                <td>
+                                                    <span className={`status-badge ${item.status === 'Planned' ? 'status-draft' : item.status === 'Paid' ? 'status-ready' : 'status-in-progress'}`}>
+                                                        {item.status}
+                                                    </span>
+                                                </td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
+                            <div className="grid grid-cols-4 gap-4 mt-4">
+                                <div className="card p-4">
+                                    <div className="text-xs text-gray-600 mb-1">Total Estimated</div>
+                                    <div className="text-2xl font-bold">KES {totalEstimated.toLocaleString()}</div>
+                                </div>
+                                <div className="card p-4">
+                                    <div className="text-xs text-gray-600 mb-1">Total Actual</div>
+                                    <div className="text-2xl font-bold">{totalActual === 0 ? 'KES 0' : 'KES ' + totalActual.toLocaleString()}</div>
+                                </div>
+                                <div className="card p-4">
+                                    <div className="text-xs text-gray-600 mb-1">Total Variance</div>
+                                    <div className="text-2xl font-bold text-green-600">+KES {totalVariance.toLocaleString()}</div>
+                                </div>
+                                <div className="card p-4">
+                                    <div className="text-xs text-gray-600 mb-1">Remaining Gap</div>
+                                    <div className="text-2xl font-bold text-orange-600">KES {Math.max(0, totalEstimated - totalActual).toLocaleString()}</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Resources */}
+                        <div className="mb-8">
+                            <h2 className="section-title">RESOURCE ALLOCATION</h2>
+                            <div className="grid grid-cols-3 gap-4">
+                                <div className="card p-6">
+                                    <div className="text-sm font-600 mb-4">Technical Mentors</div>
+                                    <div className="flex justify-between items-center mb-3">
+                                        <div>
+                                            <div className="text-2xl font-bold">{resources.technicalMentorsConfirmed}</div>
+                                            <div className="text-xs text-gray-600">Confirmed</div>
+                                        </div>
+                                        <div className="text-right">
+                                            <div className="text-2xl font-bold text-gray-400">{resources.technicalMentorsRequired}</div>
+                                            <div className="text-xs text-gray-600">Required</div>
+                                        </div>
+                                    </div>
+                                    <div className="w-full bg-gray-200 rounded-full h-2">
+                                        <div className="bg-blue-600 h-2 rounded-full" style={{width: `${(resources.technicalMentorsConfirmed / resources.technicalMentorsRequired) * 100}%`}}></div>
+                                    </div>
+                                </div>
+                                <div className="card p-6">
+                                    <div className="text-sm font-600 mb-4">Judges</div>
+                                    <div className="flex justify-between items-center mb-3">
+                                        <div>
+                                            <div className="text-2xl font-bold">{resources.judgesConfirmed}</div>
+                                            <div className="text-xs text-gray-600">Confirmed</div>
+                                        </div>
+                                        <div className="text-right">
+                                            <div className="text-2xl font-bold text-gray-400">{resources.judgesRequired}</div>
+                                            <div className="text-xs text-gray-600">Required</div>
+                                        </div>
+                                    </div>
+                                    <div className="w-full bg-gray-200 rounded-full h-2">
+                                        <div className="bg-green-600 h-2 rounded-full" style={{width: `${(resources.judgesConfirmed / resources.judgesRequired) * 100}%`}}></div>
+                                    </div>
+                                </div>
+                                <div className="card p-6">
+                                    <div className="text-sm font-600 mb-4">Participants</div>
+                                    <div className="flex justify-between items-center mb-3">
+                                        <div>
+                                            <div className="text-2xl font-bold">{resources.participantsRegistered}</div>
+                                            <div className="text-xs text-gray-600">Registered</div>
+                                        </div>
+                                        <div className="text-right">
+                                            <div className="text-2xl font-bold text-gray-400">{resources.participantsTarget}+</div>
+                                            <div className="text-xs text-gray-600">Target</div>
+                                        </div>
+                                    </div>
+                                    <div className="w-full bg-gray-200 rounded-full h-2">
+                                        <div className="bg-purple-600 h-2 rounded-full" style={{width: `${Math.min(100, (resources.participantsRegistered / resources.participantsTarget) * 100)}%`}}></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Modals */}
+                    <AddPartnerModal isOpen={addPartnerOpen} onClose={() => setAddPartnerOpen(false)} onAdd={handleAddPartner} />
+                    <EditPartnerModal isOpen={editPartnerOpen} onClose={() => setEditPartnerOpen(false)} partner={editingPartner} onUpdate={handleUpdatePartner} onDelete={handleDeletePartner} />
+                    <AddTaskModal isOpen={addTaskOpen} onClose={() => setAddTaskOpen(false)} onAdd={handleAddTask} problems={problems} partners={partners} />
+                    <EditTaskModal isOpen={editTaskOpen} onClose={() => setEditTaskOpen(false)} task={editingTask} onUpdate={handleUpdateTask} onDelete={handleDeleteTask} problems={problems} partners={partners} />
+                    <AddProblemModal isOpen={addProblemOpen} onClose={() => setAddProblemOpen(false)} onAdd={handleAddProblem} />
+                    <EditProblemModal isOpen={editProblemOpen} onClose={() => setEditProblemOpen(false)} problem={editingProblem} onUpdate={handleUpdateProblem} onDelete={handleDeleteProblem} />
+                    <AddBudgetModal isOpen={addBudgetOpen} onClose={() => setAddBudgetOpen(false)} onAdd={handleAddBudget} />
+                </div>
+            );
+        };
+
+        // Render
+        ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+    </script>
+</body>
+</html>
