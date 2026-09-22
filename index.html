@@ -198,6 +198,33 @@
             font-weight: 600;
         }
 
+        .badge-risk-must-have {
+            background: #fee2e2;
+            color: #dc2626;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: 600;
+        }
+
+        .badge-risk-core {
+            background: #fef3c7;
+            color: #d97706;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: 600;
+        }
+
+        .badge-risk-nice-to-have {
+            background: #dcfce7;
+            color: #16a34a;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: 600;
+        }
+
         .badge-risk-medium {
             background: #fef3c7;
             color: #d97706;
@@ -399,7 +426,10 @@
             .status-badge,
             .badge-risk-high,
             .badge-risk-medium,
-            .badge-risk-low {
+            .badge-risk-low,
+            .badge-risk-must-have,
+            .badge-risk-core,
+            .badge-risk-nice-to-have {
                 white-space: normal;
                 text-align: center;
             }
@@ -463,6 +493,12 @@
             return Math.max(0, days);
         };
 
+        const normalizePartnerPriority = (priority) => ({
+            High: 'Must-Have',
+            Medium: 'Core',
+            Low: 'Nice-to-Have'
+        }[priority] || priority || 'Nice-to-Have');
+
         // Modal Component
         const Modal = ({ isOpen, onClose, title, children }) => {
             if (!isOpen) return null;
@@ -489,7 +525,7 @@
                 dataShared: false,
                 lastContact: '',
                 followUpDate: '',
-                risk: 'Low',
+                risk: 'Nice-to-Have',
                 notes: ''
             });
 
@@ -513,7 +549,7 @@
                         dataShared: false,
                         lastContact: '',
                         followUpDate: '',
-                        risk: 'Low',
+                        risk: 'Nice-to-Have',
                         notes: ''
                     });
                     onClose();
@@ -559,11 +595,11 @@
                             <input type="date" name="followUpDate" value={formData.followUpDate} onChange={handleChange} />
                         </div>
                         <div>
-                            <label className="block text-sm font-600 mb-2">Risk Level</label>
+                            <label className="block text-sm font-600 mb-2">Action Priority</label>
                             <select name="risk" value={formData.risk} onChange={handleChange}>
-                                <option>Low</option>
-                                <option>Medium</option>
-                                <option>High</option>
+                                <option value="Must-Have">Must-Have (Critical for the event's success)</option>
+                                <option value="Core">Core (Highly valuable)</option>
+                                <option value="Nice-to-Have">Nice-to-Have (Bonus partner if time permits)</option>
                             </select>
                         </div>
                         <div>
@@ -581,10 +617,10 @@
 
         // Edit Partner Modal
         const EditPartnerModal = ({ isOpen, onClose, partner, onUpdate, onDelete }) => {
-            const [formData, setFormData] = useState(partner || {});
+            const [formData, setFormData] = useState(partner ? { ...partner, risk: normalizePartnerPriority(partner.risk) } : {});
 
             useEffect(() => {
-                setFormData(partner || {});
+                setFormData(partner ? { ...partner, risk: normalizePartnerPriority(partner.risk) } : {});
             }, [partner]);
 
             const handleChange = (e) => {
@@ -647,11 +683,11 @@
                             <input type="date" name="followUpDate" value={formData.followUpDate || ''} onChange={handleChange} />
                         </div>
                         <div>
-                            <label className="block text-sm font-600 mb-2">Risk Level</label>
+                            <label className="block text-sm font-600 mb-2">Action Priority</label>
                             <select name="risk" value={formData.risk || ''} onChange={handleChange}>
-                                <option>Low</option>
-                                <option>Medium</option>
-                                <option>High</option>
+                                <option value="Must-Have">Must-Have (Critical for the event's success)</option>
+                                <option value="Core">Core (Highly valuable)</option>
+                                <option value="Nice-to-Have">Nice-to-Have (Bonus partner if time permits)</option>
                             </select>
                         </div>
                         <div>
@@ -1287,12 +1323,12 @@
 
         // Partner Card
         const PartnerCard = ({ partner, onEdit }) => {
-            const getRiskBadgeClass = (risk) => {
-                switch (risk) {
-                    case 'High': return 'badge-risk-high';
-                    case 'Medium': return 'badge-risk-medium';
-                    case 'Low': return 'badge-risk-low';
-                    default: return 'badge-risk-low';
+            const getPriorityBadgeClass = (priority) => {
+                switch (normalizePartnerPriority(priority)) {
+                    case 'Must-Have': return 'badge-risk-must-have';
+                    case 'Core': return 'badge-risk-core';
+                    case 'Nice-to-Have': return 'badge-risk-nice-to-have';
+                    default: return 'badge-risk-nice-to-have';
                 }
             };
 
@@ -1300,7 +1336,7 @@
                 <div className="card p-4 cursor-pointer hover:shadow-md transition-shadow" onClick={() => onEdit(partner)}>
                     <div className="flex justify-between items-start mb-3">
                         <div className="font-600">{partner.name}</div>
-                        {partner.risk && <div className={getRiskBadgeClass(partner.risk)}>{partner.risk}</div>}
+                        {partner.risk && <div className={getPriorityBadgeClass(partner.risk)}>{normalizePartnerPriority(partner.risk)}</div>}
                     </div>
                     {partner.contact && <div className="text-sm text-gray-600 mb-2">📞 {partner.contact}</div>}
                     <div className="flex gap-4 text-xs mb-3">
@@ -1377,20 +1413,20 @@
         // Main App Component
         const App = () => {
             const [partners, setPartners] = usePersistentState('hackathon_partners', [
-                { id: '1', name: 'Sagini Contact 1', status: 'TO CONTACT', contact: '', problemBrief: false, dataShared: false, lastContact: '', followUpDate: '', risk: 'Low', notes: '' },
-                { id: '2', name: 'Sagini Contact 2', status: 'TO CONTACT', contact: '', problemBrief: false, dataShared: false, lastContact: '', followUpDate: '', risk: 'Low', notes: '' },
-                { id: '3', name: 'Sagini Contact 3', status: 'TO CONTACT', contact: '', problemBrief: false, dataShared: false, lastContact: '', followUpDate: '', risk: 'Low', notes: '' },
-                { id: '4', name: 'Additional Partner Prospect', status: 'TO CONTACT', contact: '', problemBrief: false, dataShared: false, lastContact: '', followUpDate: '', risk: 'Low', notes: '' },
-                { id: '5', name: 'Cursor', status: 'CONTACTED / AWAITING REPLY', contact: '', problemBrief: false, dataShared: false, lastContact: '', followUpDate: '', risk: 'Low', notes: '' },
-                { id: '6', name: 'Women in Tech Kenya', status: 'CONTACTED / AWAITING REPLY', contact: '', problemBrief: false, dataShared: false, lastContact: '', followUpDate: '', risk: 'Low', notes: '' },
-                { id: '7', name: 'Other Contacted Partner', status: 'CONTACTED / AWAITING REPLY', contact: '', problemBrief: false, dataShared: false, lastContact: '', followUpDate: '', risk: 'Low', notes: '' },
-                { id: '8', name: 'Vaj', status: 'IN DISCUSSIONS', contact: '', problemBrief: false, dataShared: false, lastContact: '', followUpDate: '', risk: 'Low', notes: '' },
-                { id: '9', name: 'GDG Nairobi', status: 'IN DISCUSSIONS', contact: '', problemBrief: false, dataShared: false, lastContact: '', followUpDate: '', risk: 'Low', notes: '' },
-                { id: '10', name: 'Casa AI', status: 'IN DISCUSSIONS', contact: '', problemBrief: false, dataShared: false, lastContact: '', followUpDate: '', risk: 'Low', notes: '' },
-                { id: '11', name: 'Remaining Tech', status: 'IN DISCUSSIONS', contact: '', problemBrief: false, dataShared: false, lastContact: '', followUpDate: '', risk: 'Low', notes: '' },
-                { id: '12', name: 'Africa\'s Talking', status: 'AT RISK / BACKUP', contact: '', problemBrief: false, dataShared: false, lastContact: '', followUpDate: '', risk: 'High', notes: '' },
-                { id: '13', name: 'Leopard', status: 'AT RISK / BACKUP', contact: '', problemBrief: false, dataShared: false, lastContact: '', followUpDate: '', risk: 'High', notes: '' },
-                { id: '14', name: 'SMS Lewa', status: 'AT RISK / BACKUP', contact: '', problemBrief: false, dataShared: false, lastContact: '', followUpDate: '', risk: 'High', notes: '' }
+                { id: '1', name: 'Sagini Contact 1', status: 'TO CONTACT', contact: '', problemBrief: false, dataShared: false, lastContact: '', followUpDate: '', risk: 'Nice-to-Have', notes: '' },
+                { id: '2', name: 'Sagini Contact 2', status: 'TO CONTACT', contact: '', problemBrief: false, dataShared: false, lastContact: '', followUpDate: '', risk: 'Nice-to-Have', notes: '' },
+                { id: '3', name: 'Sagini Contact 3', status: 'TO CONTACT', contact: '', problemBrief: false, dataShared: false, lastContact: '', followUpDate: '', risk: 'Nice-to-Have', notes: '' },
+                { id: '4', name: 'Additional Partner Prospect', status: 'TO CONTACT', contact: '', problemBrief: false, dataShared: false, lastContact: '', followUpDate: '', risk: 'Nice-to-Have', notes: '' },
+                { id: '5', name: 'Cursor', status: 'CONTACTED / AWAITING REPLY', contact: '', problemBrief: false, dataShared: false, lastContact: '', followUpDate: '', risk: 'Nice-to-Have', notes: '' },
+                { id: '6', name: 'Women in Tech Kenya', status: 'CONTACTED / AWAITING REPLY', contact: '', problemBrief: false, dataShared: false, lastContact: '', followUpDate: '', risk: 'Nice-to-Have', notes: '' },
+                { id: '7', name: 'Other Contacted Partner', status: 'CONTACTED / AWAITING REPLY', contact: '', problemBrief: false, dataShared: false, lastContact: '', followUpDate: '', risk: 'Nice-to-Have', notes: '' },
+                { id: '8', name: 'Vaj', status: 'IN DISCUSSIONS', contact: '', problemBrief: false, dataShared: false, lastContact: '', followUpDate: '', risk: 'Nice-to-Have', notes: '' },
+                { id: '9', name: 'GDG Nairobi', status: 'IN DISCUSSIONS', contact: '', problemBrief: false, dataShared: false, lastContact: '', followUpDate: '', risk: 'Nice-to-Have', notes: '' },
+                { id: '10', name: 'Casa AI', status: 'IN DISCUSSIONS', contact: '', problemBrief: false, dataShared: false, lastContact: '', followUpDate: '', risk: 'Nice-to-Have', notes: '' },
+                { id: '11', name: 'Remaining Tech', status: 'IN DISCUSSIONS', contact: '', problemBrief: false, dataShared: false, lastContact: '', followUpDate: '', risk: 'Nice-to-Have', notes: '' },
+                { id: '12', name: 'Africa\'s Talking', status: 'AT RISK / BACKUP', contact: '', problemBrief: false, dataShared: false, lastContact: '', followUpDate: '', risk: 'Must-Have', notes: '' },
+                { id: '13', name: 'Leopard', status: 'AT RISK / BACKUP', contact: '', problemBrief: false, dataShared: false, lastContact: '', followUpDate: '', risk: 'Must-Have', notes: '' },
+                { id: '14', name: 'SMS Lewa', status: 'AT RISK / BACKUP', contact: '', problemBrief: false, dataShared: false, lastContact: '', followUpDate: '', risk: 'Must-Have', notes: '' }
             ]);
 
             const [problems, setProblems] = usePersistentState('hackathon_problems', [
@@ -1501,6 +1537,16 @@
                 due: 'All'
             });
 
+            useEffect(() => {
+                const normalizedPartners = partners.map(partner => ({
+                    ...partner,
+                    risk: normalizePartnerPriority(partner.risk)
+                }));
+                if (normalizedPartners.some((partner, index) => partner.risk !== partners[index].risk)) {
+                    setPartners(normalizedPartners);
+                }
+            }, [partners, setPartners]);
+
             // Calculate metrics
             const metrics = {
                 partnersInDiscussion: partners.filter(p => p.status === 'IN DISCUSSIONS').length,
@@ -1527,7 +1573,7 @@
             .sort((a, b) => new Date(a.date) - new Date(b.date))
             .slice(0, 5);
 
-            const highRiskPartners = partners.filter(p => p.risk === 'High');
+            const highRiskPartners = partners.filter(p => normalizePartnerPriority(p.risk) === 'Must-Have');
             const blockedTasks = tasks.filter(t => t.status === 'BLOCKED');
             const blockedProblems = problems.filter(p => p.status === 'Blocked');
             const overdueTasks = tasks.filter(t => isOverdue(t.dueDate));
@@ -1856,7 +1902,7 @@
                                             {highRiskPartners.map(p => (
                                                 <div key={p.id} className="text-xs">
                                                     <div className="font-600 text-red-600">🤝 {p.name}</div>
-                                                    <div className="text-gray-600">High risk partner</div>
+                                                    <div className="text-gray-600">Must-Have partner</div>
                                                 </div>
                                             ))}
                                             {blockedTasks.map(t => (
