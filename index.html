@@ -11,28 +11,67 @@
 <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
 
 <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link href="./dist/output.css" rel="stylesheet">
     <style>
         :root {
-            --bg-primary: #F7F7F5;
-            --text-primary: #171717;
-            --accent: #E11D48;
+            --bg-primary: #FFFFFF;
+            --surface: #FFFFFF;
+            --surface-muted: #F8F9FA;
+            --surface-soft: #F3F4F6;
+            --text-primary: #111827;
+            --text-secondary: #4B5563;
+            --text-muted: #6B7280;
+            --border: #E5E7EB;
+            --accent: #E52E2E;
+            --accent-hover: #C92323;
+            --secondary-accent: #0091AD;
+            --secondary-accent-hover: #00798F;
             --warning: #F59E0B;
             --success: #16A34A;
             --data: #2563EB;
             --partner: #7C3AED;
             --neutral: #6B7280;
+            --dark-surface: #0F0F0F;
+        }
+
+        [data-theme="dark"] {
+            --bg-primary: #111827;
+            --surface: #1F2937;
+            --surface-muted: #172033;
+            --surface-soft: #374151;
+            --text-primary: #F9FAFB;
+            --text-secondary: #D1D5DB;
+            --text-muted: #9CA3AF;
+            --border: #374151;
+            --accent: #F04444;
+            --accent-hover: #FF5A5A;
+            --secondary-accent: #29B8CF;
+            --secondary-accent-hover: #0091AD;
+            --warning: #FBBF24;
+            --success: #4ADE80;
+            --data: #60A5FA;
+            --partner: #A78BFA;
+            --neutral: #9CA3AF;
+            --dark-surface: #0F0F0F;
+        }
+
+        [data-theme] {
+            color: var(--text-primary);
         }
 
         body {
             background-color: var(--bg-primary);
             color: var(--text-primary);
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            font-family: Inter, Poppins, 'Open Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            line-height: 1.55;
         }
 
         .card {
-            background: white;
-            border: 1px solid #E5E5E0;
+            background: var(--surface);
+            border: 1px solid var(--border);
             border-radius: 6px;
             box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
         }
@@ -43,7 +82,7 @@
 
         .dropzone-active {
             border: 2px dashed var(--accent);
-            background-color: rgba(225, 29, 72, 0.04);
+            background-color: rgba(229, 46, 46, 0.08);
         }
 
         .priority-critical { color: var(--accent); }
@@ -59,23 +98,23 @@
             font-weight: 600;
         }
 
-        .status-draft { background: #f3f4f6; color: #4b5563; }
-        .status-in-progress { background: #dbeafe; color: #0c4a6e; }
-        .status-ready { background: #dcfce7; color: #14532d; }
-        .status-blocked { background: #fee2e2; color: #7f1d1d; }
+        .status-draft { background: var(--surface-soft); color: var(--text-secondary); }
+        .status-in-progress { background: #DBEAFE; color: #1E3A8A; }
+        .status-ready { background: #DCFCE7; color: #166534; }
+        .status-blocked { background: #FEE2E2; color: #991B1B; }
 
         .kanban-column {
             flex: 0 0 280px;
-            background: #f9fafb;
-            border: 1px solid #e5e5e0;
+            background: var(--surface-muted);
+            border: 1px solid var(--border);
             border-radius: 6px;
             padding: 12px;
             min-height: 400px;
         }
 
         .kanban-card {
-            background: white;
-            border: 1px solid #e5e5e0;
+            background: var(--surface);
+            border: 1px solid var(--border);
             border-radius: 4px;
             padding: 12px;
             margin-bottom: 8px;
@@ -89,6 +128,7 @@
 
         .kanban-card:hover {
             box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+            border-color: var(--secondary-accent);
         }
 
         .modal-overlay {
@@ -105,7 +145,7 @@
         }
 
         .modal {
-            background: white;
+            background: var(--surface);
             border-radius: 8px;
             padding: 24px;
             max-width: 500px;
@@ -128,11 +168,11 @@
         th, td {
             padding: 12px;
             text-align: left;
-            border-bottom: 1px solid #e5e5e0;
+            border-bottom: 1px solid var(--border);
         }
 
         th {
-            background: #f9fafb;
+            background: var(--surface-muted);
             font-weight: 600;
             font-size: 13px;
         }
@@ -140,7 +180,7 @@
         input, select, textarea {
             width: 100%;
             padding: 8px 12px;
-            border: 1px solid #e5e5e0;
+            border: 1px solid var(--border);
             border-radius: 4px;
             font-family: inherit;
             font-size: 14px;
@@ -149,7 +189,7 @@
         input:focus, select:focus, textarea:focus {
             outline: none;
             border-color: var(--accent);
-            box-shadow: 0 0 0 3px rgba(225, 29, 72, 0.1);
+            box-shadow: 0 0 0 3px rgba(229, 46, 46, 0.14);
         }
 
         .btn {
@@ -168,16 +208,23 @@
         }
 
         .btn-primary:hover {
-            background: #be123c;
+            background: var(--accent-hover);
         }
 
         .btn-secondary {
-            background: #f3f4f6;
+            background: var(--surface-soft);
             color: var(--text-primary);
         }
 
         .btn-secondary:hover {
-            background: #e5e7eb;
+            background: var(--secondary-accent);
+            color: #FFFFFF;
+        }
+
+        .btn-export:hover {
+            background: var(--secondary-accent);
+            color: #FFFFFF;
+            border-color: var(--secondary-accent);
         }
 
         .btn-danger {
@@ -267,8 +314,58 @@
         .resource-number:hover,
         .resource-number:focus {
             border-color: #E5E5E0;
-            background: white;
+            background: var(--surface);
         }
+
+        .theme-toggle {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: var(--dark-surface);
+            color: #FFFFFF;
+            border: 1px solid var(--dark-surface);
+        }
+
+        .theme-toggle:hover {
+            background: var(--secondary-accent);
+            border-color: var(--secondary-accent);
+        }
+
+        .theme-icon {
+            flex: 0 0 auto;
+        }
+
+        .text-gray-900 { color: var(--text-primary) !important; }
+        .text-gray-700,
+        .text-gray-600 { color: var(--text-secondary) !important; }
+        .text-gray-500,
+        .text-gray-400 { color: var(--text-muted) !important; }
+        .text-red-600,
+        .text-red-700 { color: var(--accent) !important; }
+        .text-green-600 { color: var(--success) !important; }
+        .text-orange-600 { color: var(--warning) !important; }
+        .text-blue-600,
+        .text-blue-700 { color: var(--secondary-accent) !important; }
+        .text-purple-600,
+        .text-purple-700 { color: var(--partner) !important; }
+        .bg-white { background-color: var(--surface) !important; }
+        .bg-gray-200 { background-color: var(--border) !important; }
+        .bg-blue-50 { background-color: rgba(37, 99, 235, 0.1) !important; }
+        .bg-red-50 { background-color: rgba(229, 46, 46, 0.1) !important; }
+        .bg-red-100 { background-color: rgba(229, 46, 46, 0.15) !important; }
+        .bg-blue-100 { background-color: rgba(37, 99, 235, 0.14) !important; }
+        .bg-purple-100 { background-color: rgba(124, 58, 237, 0.14) !important; }
+        .border-blue-500 { border-color: var(--data) !important; }
+        .border-red-500 { border-color: var(--accent) !important; }
+        .border-gray-200 { border-color: var(--border) !important; }
+
+        [data-theme="dark"] .status-in-progress { background: #1E3A8A; color: #DBEAFE; }
+        [data-theme="dark"] .status-ready { background: #14532D; color: #DCFCE7; }
+        [data-theme="dark"] .status-blocked { background: #7F1D1D; color: #FEE2E2; }
+        [data-theme="dark"] .badge-risk-must-have { background: #7F1D1D; color: #FEE2E2; }
+        [data-theme="dark"] .badge-risk-core { background: #78350F; color: #FEF3C7; }
+        [data-theme="dark"] .badge-risk-nice-to-have { background: #14532D; color: #DCFCE7; }
+        [data-theme="dark"] .btn-danger { background: #7F1D1D; color: #FEE2E2; }
 
         *, *::before, *::after {
             box-sizing: border-box;
@@ -498,6 +595,32 @@
             Medium: 'Core',
             Low: 'Nice-to-Have'
         }[priority] || priority || 'Nice-to-Have');
+
+        const ThemeIcon = ({ isDark }) => (
+            <svg
+                className="theme-icon"
+                viewBox="0 0 24 24"
+                width="18"
+                height="18"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                aria-hidden="true"
+            >
+                {isDark ? (
+                    <>
+                        <path d="M21 12.8A8.5 8.5 0 1 1 11.2 3a6.5 6.5 0 0 0 9.8 9.8Z" />
+                    </>
+                ) : (
+                    <>
+                        <circle cx="12" cy="12" r="4" />
+                        <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41" />
+                    </>
+                )}
+            </svg>
+        );
 
         // Modal Component
         const Modal = ({ isOpen, onClose, title, children }) => {
@@ -1412,6 +1535,7 @@
 
         // Main App Component
         const App = () => {
+            const [theme, setTheme] = useState(() => localStorage.getItem('hackathon_theme') || 'light');
             const [partners, setPartners] = usePersistentState('hackathon_partners', [
                 { id: '1', name: 'Sagini Contact 1', status: 'TO CONTACT', contact: '', problemBrief: false, dataShared: false, lastContact: '', followUpDate: '', risk: 'Nice-to-Have', notes: '' },
                 { id: '2', name: 'Sagini Contact 2', status: 'TO CONTACT', contact: '', problemBrief: false, dataShared: false, lastContact: '', followUpDate: '', risk: 'Nice-to-Have', notes: '' },
@@ -1536,6 +1660,14 @@
                 owner: 'All',
                 due: 'All'
             });
+
+            useEffect(() => {
+                localStorage.setItem('hackathon_theme', theme);
+            }, [theme]);
+
+            const toggleTheme = () => {
+                setTheme(currentTheme => currentTheme === 'light' ? 'dark' : 'light');
+            };
 
             useEffect(() => {
                 const normalizedPartners = partners.map(partner => ({
@@ -1686,7 +1818,7 @@
             };
 
             return (
-                <div className="min-h-screen" style={{ backgroundColor: 'var(--bg-primary)' }}>
+                <div className="min-h-screen" data-theme={theme} style={{ backgroundColor: 'var(--bg-primary)' }}>
                     {/* Header */}
                     <header className="card m-4 p-6 mb-6">
                         <div className="flex justify-between items-start mb-4">
@@ -1705,7 +1837,11 @@
                                 <button onClick={() => setAddPartnerOpen(true)} className="btn btn-primary">+ Add Partner</button>
                                 <button onClick={() => setAddProblemOpen(true)} className="btn btn-primary">+ Add Problem</button>
                                 <button onClick={() => setAddBudgetOpen(true)} className="btn btn-primary">+ Add Budget</button>
-                                <button onClick={handleExport} className="btn btn-secondary">Export</button>
+                                <button onClick={handleExport} className="btn btn-secondary btn-export">Export</button>
+                                <button onClick={toggleTheme} className="btn theme-toggle" aria-label={`Switch to ${theme === 'light' ? 'dark' : 'light'} mode`}>
+                                    <ThemeIcon isDark={theme === 'dark'} />
+                                    <span>{theme === 'light' ? 'Dark mode' : 'Light mode'}</span>
+                                </button>
                             </div>
                         </div>
                         <div>
@@ -1901,7 +2037,8 @@
                                         <div className="space-y-3">
                                             {highRiskPartners.map(p => (
                                                 <div key={p.id} className="text-xs">
-                                                    <div className="font-600 text-red-600">{p.name}</div>
+                                                    <div className="fon
+                                                    t-600 text-red-600">{p.name}</div>
                                                     <div className="text-gray-600">Must-Have partner</div>
                                                 </div>
                                             ))}
