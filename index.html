@@ -229,6 +229,166 @@
             text-transform: uppercase;
             letter-spacing: 0.5px;
         }
+
+        *, *::before, *::after {
+            box-sizing: border-box;
+        }
+
+        html, body, #root {
+            min-width: 0;
+            max-width: 100%;
+        }
+
+        body {
+            overflow-x: hidden;
+        }
+
+        button, input, select, textarea {
+            max-width: 100%;
+        }
+
+        @media (max-width: 1024px) {
+            header.card {
+                margin: 12px;
+                padding: 20px;
+            }
+
+            header.card > .flex.justify-between {
+                flex-wrap: wrap;
+                gap: 20px;
+            }
+
+            header.card > .flex.justify-between > :first-child {
+                min-width: 0;
+            }
+
+            header.card > .flex.justify-between > :last-child {
+                display: flex;
+                flex-wrap: wrap;
+                gap: 8px;
+                width: 100%;
+            }
+
+            .grid.grid-cols-5 {
+                grid-template-columns: repeat(3, minmax(0, 1fr));
+            }
+
+            .grid.grid-cols-4 {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
+
+            .grid.grid-cols-3 {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
+
+            .grid.grid-cols-3 > .col-span-2 {
+                grid-column: span 2 / span 2;
+            }
+
+            .kanban-column {
+                flex-basis: 260px;
+            }
+        }
+
+        @media (max-width: 640px) {
+            header.card {
+                margin: 8px;
+                padding: 16px;
+                margin-bottom: 16px;
+            }
+
+            header.card h1 {
+                font-size: 1.65rem;
+                line-height: 1.15;
+            }
+
+            header.card h2 {
+                font-size: 1.05rem;
+            }
+
+            header.card > .flex.justify-between > :last-child .btn {
+                flex: 1 1 calc(50% - 8px);
+                min-width: 120px;
+            }
+
+            header.card .flex.gap-4.items-center {
+                align-items: flex-start;
+                flex-direction: column;
+                gap: 8px;
+            }
+
+            .px-4 {
+                padding-left: 12px;
+                padding-right: 12px;
+            }
+
+            .grid.grid-cols-5,
+            .grid.grid-cols-4,
+            .grid.grid-cols-3,
+            .grid.grid-cols-2 {
+                grid-template-columns: minmax(0, 1fr);
+            }
+
+            .grid.grid-cols-3 > .col-span-2 {
+                grid-column: auto;
+            }
+
+            .card.p-6 {
+                padding: 16px;
+            }
+
+            .card.p-4.flex.gap-4.items-center {
+                align-items: stretch;
+                flex-direction: column;
+                gap: 10px;
+            }
+
+            .card.p-4.flex.gap-4.items-center .btn,
+            .card.p-4.flex.gap-4.items-center select {
+                width: 100%;
+                flex: none;
+            }
+
+            .modal {
+                width: calc(100% - 24px);
+                padding: 18px;
+                max-height: 90vh;
+            }
+
+            .modal form > .flex.gap-3 {
+                flex-wrap: wrap;
+            }
+
+            .modal form > .flex.gap-3 .btn {
+                min-width: calc(50% - 6px);
+            }
+
+            .modal form > .flex.gap-4 {
+                align-items: flex-start;
+                flex-direction: column;
+                gap: 10px;
+            }
+
+            .modal form > .flex.gap-4 label {
+                max-width: 100%;
+            }
+
+            .status-badge,
+            .badge-risk-high,
+            .badge-risk-medium,
+            .badge-risk-low {
+                white-space: normal;
+                text-align: center;
+            }
+
+            .kanban-column {
+                flex-basis: min(260px, calc(100vw - 40px));
+            }
+
+            table {
+                min-width: 720px;
+            }
+        }
     </style>
 </head>
 <body>
@@ -915,8 +1075,9 @@
             );
         };
 
-        // Add Budget Item Modal
-        const AddBudgetModal = ({ isOpen, onClose, onAdd }) => {
+        // Budget Item Modal
+        const BudgetModal = ({ isOpen, onClose, budgetItem, onSave, onDelete }) => {
+            const isEditing = Boolean(budgetItem);
             const [formData, setFormData] = useState({
                 category: 'Venue',
                 item: '',
@@ -927,6 +1088,18 @@
                 notes: ''
             });
 
+            useEffect(() => {
+                setFormData(budgetItem || {
+                    category: 'Venue',
+                    item: '',
+                    estimated: '',
+                    actual: '',
+                    fundingSource: '',
+                    status: 'Planned',
+                    notes: ''
+                });
+            }, [budgetItem, isOpen]);
+
             const handleChange = (e) => {
                 const { name, value } = e.target;
                 setFormData(prev => ({ ...prev, [name]: value }));
@@ -935,22 +1108,20 @@
             const handleSubmit = (e) => {
                 e.preventDefault();
                 if (formData.item.trim()) {
-                    onAdd(formData);
-                    setFormData({
-                        category: 'Venue',
-                        item: '',
-                        estimated: '',
-                        actual: '',
-                        fundingSource: '',
-                        status: 'Planned',
-                        notes: ''
-                    });
+                    onSave(formData);
+                    onClose();
+                }
+            };
+
+            const handleDelete = () => {
+                if (confirm('Are you sure you want to delete this budget item?')) {
+                    onDelete(budgetItem.id);
                     onClose();
                 }
             };
 
             return (
-                <Modal isOpen={isOpen} onClose={onClose} title="Add Budget Item">
+                <Modal isOpen={isOpen} onClose={onClose} title={isEditing ? 'Edit Budget Item' : 'Add Budget Item'}>
                     <form onSubmit={handleSubmit} className="space-y-4">
                         <div>
                             <label className="block text-sm font-600 mb-2">Category</label>
@@ -995,7 +1166,8 @@
                             <textarea name="notes" value={formData.notes} onChange={handleChange} rows="2"></textarea>
                         </div>
                         <div className="flex gap-3 pt-4">
-                            <button type="submit" className="btn btn-primary flex-1">Add Item</button>
+                            <button type="submit" className="btn btn-primary flex-1">{isEditing ? 'Update Item' : 'Add Item'}</button>
+                            {isEditing && <button type="button" onClick={handleDelete} className="btn btn-danger flex-1">Delete</button>}
                             <button type="button" onClick={onClose} className="btn btn-secondary flex-1">Cancel</button>
                         </div>
                     </form>
@@ -1297,6 +1469,8 @@
             const [editProblemOpen, setEditProblemOpen] = useState(false);
             const [editingProblem, setEditingProblem] = useState(null);
             const [addBudgetOpen, setAddBudgetOpen] = useState(false);
+            const [editBudgetOpen, setEditBudgetOpen] = useState(false);
+            const [editingBudget, setEditingBudget] = useState(null);
             const [taskFilter, setTaskFilter] = useState({
                 workstream: 'All',
                 priority: 'All',
@@ -1411,6 +1585,19 @@
                     ...data
                 };
                 setBudget([...budget, newBudget]);
+            };
+
+            const handleUpdateBudget = (item) => {
+                setBudget(budget.map(budgetItem => budgetItem.id === item.id ? item : budgetItem));
+                setEditingBudget(null);
+            };
+
+            const handleDeleteBudget = (id) => {
+                setBudget(budget.filter(item => item.id !== id));
+            };
+
+            const handleResourceChange = (field, value) => {
+                setResources({ ...resources, [field]: Math.max(0, Number(value) || 0) });
             };
 
             const handleExport = () => {
