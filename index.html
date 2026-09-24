@@ -560,8 +560,15 @@
             });
 
             const setPersistentState = useCallback((value) => {
-                setState(value);
-                localStorage.setItem(key, JSON.stringify(value));
+                setState(currentState => {
+                    const nextState = typeof value === 'function' ? value(currentState) : value;
+                    try {
+                        localStorage.setItem(key, JSON.stringify(nextState));
+                    } catch (error) {
+                        console.warn(`Unable to persist ${key}. Use Export to create a backup.`, error);
+                    }
+                    return nextState;
+                });
             }, [key]);
 
             return [state, setPersistentState];
@@ -696,6 +703,7 @@
                                 <option>TO CONTACT</option>
                                 <option>CONTACTED / AWAITING REPLY</option>
                                 <option>IN DISCUSSIONS</option>
+                                <option>CONFIRMED</option>
                                 <option>AT RISK / BACKUP</option>
                             </select>
                         </div>
@@ -784,6 +792,7 @@
                                 <option>TO CONTACT</option>
                                 <option>CONTACTED / AWAITING REPLY</option>
                                 <option>IN DISCUSSIONS</option>
+                                <option>CONFIRMED</option>
                                 <option>AT RISK / BACKUP</option>
                             </select>
                         </div>
@@ -1830,6 +1839,7 @@
                                     <span className="inline-block bg-red-100 text-red-700 px-3 py-1 text-xs font-600 rounded">
                                         LIVE PLANNING
                                     </span>
+                                    <span className="text-xs text-gray-500">Saved locally</span>
                                 </div>
                             </div>
                             <div className="flex gap-3">
@@ -1910,8 +1920,8 @@
                         {/* Partner Pipeline */}
                         <div className="mb-8">
                             <h2 className="section-title">PARTNER PIPELINE</h2>
-                            <div className="grid grid-cols-4 gap-4">
-                                {['TO CONTACT', 'CONTACTED / AWAITING REPLY', 'IN DISCUSSIONS', 'AT RISK / BACKUP'].map(status => (
+                            <div className="grid grid-cols-5 gap-4">
+                                {['TO CONTACT', 'CONTACTED / AWAITING REPLY', 'IN DISCUSSIONS', 'CONFIRMED', 'AT RISK / BACKUP'].map(status => (
                                     <div key={status}>
                                         <div className="font-600 text-sm mb-4 text-gray-700 flex justify-between">
                                             <span>{status === 'TO CONTACT' ? 'Sagini Contacts' : status}</span>
