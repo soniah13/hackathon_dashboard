@@ -298,6 +298,26 @@
             color: var(--text-primary);
         }
 
+        .section-heading-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 16px;
+            margin-bottom: 16px;
+        }
+
+        .section-heading-row .section-title {
+            margin-bottom: 0;
+        }
+
+        .section-action {
+            flex: 0 0 auto;
+            padding: 7px 12px;
+            font-size: 13px;
+            line-height: 1.2;
+            white-space: nowrap;
+        }
+
         .status-label {
             font-weight: 600;
             font-size: 12px;
@@ -473,6 +493,20 @@
 
             .card.p-6 {
                 padding: 16px;
+            }
+
+            .section-heading-row {
+                align-items: flex-start;
+                flex-wrap: wrap;
+            }
+
+            .section-heading-row > .flex {
+                width: 100%;
+                flex-wrap: wrap;
+            }
+
+            .section-action {
+                white-space: normal;
             }
 
             .flex.justify-between.items-center.mb-4 {
@@ -2098,11 +2132,6 @@
                                 </div>
                             </div>
                             <div className="flex gap-3">
-                                <button onClick={() => setAddTaskOpen(true)} className="btn btn-primary">+ Add Task</button>
-                                <button onClick={() => setAddPartnerOpen(true)} className="btn btn-primary">+ Add Partner</button>
-                                <button onClick={() => setAddProblemOpen(true)} className="btn btn-primary">+ Add Problem</button>
-                                <button onClick={() => setAddBudgetOpen(true)} className="btn btn-primary">+ Add Budget</button>
-                                <button onClick={() => setContributionOpen(true)} className="btn btn-primary">+ Team Contribution</button>
                                 <button onClick={handleExport} className="btn btn-secondary btn-export">Export</button>
                                 <select value={userRole} onChange={(event) => setUserRole(event.target.value)} aria-label="Current workspace role" className="role-select">
                                     <option>Team Member</option>
@@ -2180,7 +2209,10 @@
 
                         {/* Partner Pipeline */}
                         <div className="mb-8">
-                            <h2 className="section-title">PARTNER PIPELINE</h2>
+                            <div className="section-heading-row">
+                                <h2 className="section-title">PARTNER PIPELINE</h2>
+                                <button onClick={() => setAddPartnerOpen(true)} className="btn btn-primary section-action">+ Add Partner</button>
+                            </div>
                             <div className="grid grid-cols-5 gap-4">
                                 {['TO CONTACT', 'CONTACTED / AWAITING REPLY', 'IN DISCUSSIONS', 'CONFIRMED', 'AT RISK / BACKUP'].map(status => (
                                     <div key={status}>
@@ -2217,12 +2249,15 @@
 
                         {/* Team Contributions */}
                         <div className="mb-8">
-                            <div className="flex justify-between items-center mb-4">
+                            <div className="section-heading-row">
                                 <div>
                                     <h2 className="section-title mb-1">TEAM PARTNER CONTRIBUTIONS</h2>
                                     <p className="text-sm text-gray-600">Append-only submissions for warm contacts and alternative partner suggestions.</p>
                                 </div>
-                                <span className="status-badge status-draft">{isAdmin ? `${userRole} review access` : 'Team Member: submit only'}</span>
+                                <div className="flex items-center gap-3">
+                                    <span className="status-badge status-draft">{isAdmin ? `${userRole} review access` : 'Team Member: submit only'}</span>
+                                    <button onClick={() => setContributionOpen(true)} className="btn btn-primary section-action">+ Team Contribution</button>
+                                </div>
                             </div>
                             {contributions.length === 0 ? (
                                 <div className="card p-6 text-sm text-gray-600">No contributions submitted yet.</div>
@@ -2248,7 +2283,10 @@
 
                         {/* Problems */}
                         <div className="mb-8">
-                            <h2 className="section-title">PROBLEM BRIEFS & DATA TRACKER</h2>
+                            <div className="section-heading-row">
+                                <h2 className="section-title">PROBLEM BRIEFS & DATA TRACKER</h2>
+                                <button onClick={() => setAddProblemOpen(true)} className="btn btn-primary section-action">+ Add Problem</button>
+                            </div>
                             {problems.map(problem => (
                                 <ProblemCard
                                     key={problem.id}
@@ -2263,7 +2301,10 @@
 
                         {/* Task Filtering */}
                         <div className="mb-4">
-                            <h2 className="section-title">MASTER TASK BOARD</h2>
+                            <div className="section-heading-row">
+                                <h2 className="section-title">MASTER TASK BOARD</h2>
+                                <button onClick={() => setAddTaskOpen(true)} className="btn btn-primary section-action">+ Add Task</button>
+                            </div>
                             <div className="card p-4 mb-4 flex gap-4 items-center">
                                 <select value={taskFilter.workstream} onChange={(e) => setTaskFilter({...taskFilter, workstream: e.target.value})} className="flex-1">
                                     <option value="All">All Workstreams</option>
@@ -2370,9 +2411,9 @@
 
                         {/* Budget */}
                         <div className="mb-8">
-                            <div className="flex justify-between items-center mb-4">
+                            <div className="section-heading-row">
                                 <h2 className="section-title mb-0">WORKING BUDGET & RESOURCE ALLOCATION</h2>
-                                <button onClick={() => setAddBudgetOpen(true)} className="btn btn-primary">+ Add Budget Item</button>
+                                <button onClick={() => setAddBudgetOpen(true)} className="btn btn-primary section-action">+ Add Budget Item</button>
                             </div>
                             <div className="card overflow-x-auto">
                                 <table>

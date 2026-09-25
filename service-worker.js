@@ -1,4 +1,4 @@
-const CACHE_NAME = 'hackathon-dashboard-v2';
+const CACHE_NAME = 'hackathon-dashboard-v3';
 const APP_SHELL = ['./', './index.html', './dist/output.css', './manifest.json'];
 
 self.addEventListener('install', event => {
