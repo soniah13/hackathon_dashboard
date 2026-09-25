@@ -15,6 +15,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link href="./dist/output.css" rel="stylesheet">
+    <link rel="manifest" href="./manifest.json">
     <style>
         :root {
             --bg-primary: #FFFFFF;
@@ -836,6 +837,152 @@
             );
         };
 
+        // Partner contribution workflow
+        const ContributionModal = ({ isOpen, onClose, onSave, contribution, partners, isAdmin }) => {
+            const isEditing = Boolean(contribution);
+            const emptyForm = {
+                submissionType: 'existing',
+                partnerId: '',
+                alternativeCompany: '',
+                alternativeToPartnerId: '',
+                contributorName: '',
+                contributorEmail: '',
+                contactName: '',
+                contactEmail: '',
+                contactChannel: '',
+                contactRole: '',
+                relationshipHistory: '',
+                leverage: '',
+                potentialOffering: '',
+                notes: '',
+                status: 'Submitted'
+            };
+            const [formData, setFormData] = useState(contribution || emptyForm);
+            const [partnerSearch, setPartnerSearch] = useState('');
+            const matchingPartners = partners.filter(partner => partner.name.toLowerCase().includes(partnerSearch.toLowerCase()));
+
+            useEffect(() => {
+                setFormData(contribution || emptyForm);
+            }, [contribution, isOpen]);
+
+            const handleChange = (event) => {
+                const { name, value } = event.target;
+                setFormData(previous => ({ ...previous, [name]: value }));
+            };
+
+            const handleSubmit = (event) => {
+                event.preventDefault();
+                const hasTarget = formData.submissionType === 'existing'
+                    ? formData.partnerId
+                    : formData.alternativeCompany.trim() && formData.alternativeToPartnerId;
+                if (!formData.contributorName.trim() || !formData.contributorEmail.trim() || !hasTarget) return;
+                onSave(formData);
+                onClose();
+            };
+
+            return (
+                <Modal isOpen={isOpen} onClose={onClose} title={isEditing ? 'Review Partner Contribution' : 'Contribute Partner Lead'}>
+                    <form onSubmit={handleSubmit} className="space-y-4">
+                        <div>
+                            <label className="block text-sm font-600 mb-2">Contribution Type</label>
+                            <select name="submissionType" value={formData.submissionType} onChange={handleChange} disabled={isEditing && !isAdmin}>
+                                <option value="existing">Existing partner in pipeline</option>
+                                <option value="alternative">Alternative partner suggestion</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label className="block text-sm font-600 mb-2">Search partners</label>
+                            <input type="search" value={partnerSearch} onChange={(event) => setPartnerSearch(event.target.value)} placeholder="Type a company name" />
+                        </div>
+                        {formData.submissionType === 'existing' ? (
+                            <div>
+                                <label className="block text-sm font-600 mb-2">Existing Partner</label>
+                                <select name="partnerId" value={formData.partnerId} onChange={handleChange} required disabled={isEditing && !isAdmin}>
+                                    <option value="">Select a partner</option>
+                                    {matchingPartners.map(partner => <option key={partner.id} value={partner.id}>{partner.name}</option>)}
+                                </select>
+                            </div>
+                        ) : (
+                            <>
+                                <div>
+                                    <label className="block text-sm font-600 mb-2">Alternative Company</label>
+                                    <input type="text" name="alternativeCompany" value={formData.alternativeCompany} onChange={handleChange} required disabled={isEditing && !isAdmin} />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-600 mb-2">Alternative To</label>
+                                    <select name="alternativeToPartnerId" value={formData.alternativeToPartnerId} onChange={handleChange} required disabled={isEditing && !isAdmin}>
+                                        <option value="">Select the partner/category this replaces</option>
+                                        {matchingPartners.map(partner => <option key={partner.id} value={partner.id}>Alternative to {partner.name}</option>)}
+                                    </select>
+                                </div>
+                            </>
+                        )}
+                        <div className="grid grid-cols-2 gap-3">
+                            <div>
+                                <label className="block text-sm font-600 mb-2">Contributor Name</label>
+                                <input type="text" name="contributorName" value={formData.contributorName} onChange={handleChange} required disabled={isEditing && !isAdmin} />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-600 mb-2">Contributor Email</label>
+                                <input type="email" name="contributorEmail" value={formData.contributorEmail} onChange={handleChange} required disabled={isEditing && !isAdmin} />
+                            </div>
+                        </div>
+                        <div className="grid grid-cols-2 gap-3">
+                            <div>
+                                <label className="block text-sm font-600 mb-2">Contact Name</label>
+                                <input type="text" name="contactName" value={formData.contactName} onChange={handleChange} disabled={isEditing && !isAdmin} />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-600 mb-2">Contact Email</label>
+                                <input type="email" name="contactEmail" value={formData.contactEmail} onChange={handleChange} disabled={isEditing && !isAdmin} />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-600 mb-2">LinkedIn / Phone</label>
+                                <input type="text" name="contactChannel" value={formData.contactChannel} onChange={handleChange} disabled={isEditing && !isAdmin} />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-600 mb-2">Contact Role</label>
+                                <input type="text" name="contactRole" value={formData.contactRole} onChange={handleChange} disabled={isEditing && !isAdmin} />
+                            </div>
+                        </div>
+                        <div>
+                            <label className="block text-sm font-600 mb-2">Relationship History</label>
+                            <textarea name="relationshipHistory" value={formData.relationshipHistory} onChange={handleChange} rows="2" disabled={isEditing && !isAdmin}></textarea>
+                        </div>
+                        <div>
+                            <label className="block text-sm font-600 mb-2">Leverage / Warm Intro Path</label>
+                            <textarea name="leverage" value={formData.leverage} onChange={handleChange} rows="2" disabled={isEditing && !isAdmin}></textarea>
+                        </div>
+                        <div>
+                            <label className="block text-sm font-600 mb-2">Potential Offering</label>
+                            <textarea name="potentialOffering" value={formData.potentialOffering} onChange={handleChange} rows="2" disabled={isEditing && !isAdmin}></textarea>
+                        </div>
+                        <div>
+                            <label className="block text-sm font-600 mb-2">Notes and Supporting Information</label>
+                            <textarea name="notes" value={formData.notes} onChange={handleChange} rows="3" disabled={isEditing && !isAdmin}></textarea>
+                        </div>
+                        {isEditing && isAdmin && (
+                            <div>
+                                <label className="block text-sm font-600 mb-2">Review Status</label>
+                                <select name="status" value={formData.status} onChange={handleChange}>
+                                    <option>Submitted</option>
+                                    <option>Under Review</option>
+                                    <option>Contacted</option>
+                                    <option>Qualified</option>
+                                    <option>Declined</option>
+                                    <option>Merged</option>
+                                </select>
+                            </div>
+                        )}
+                        <div className="flex gap-3 pt-4">
+                            <button type="submit" className="btn btn-primary flex-1">{isEditing ? 'Save Review' : 'Submit Contribution'}</button>
+                            <button type="button" onClick={onClose} className="btn btn-secondary flex-1">Cancel</button>
+                        </div>
+                    </form>
+                </Modal>
+            );
+        };
+
         // Add Task Modal
         const AddTaskModal = ({ isOpen, onClose, onAdd, problems, partners }) => {
             const [formData, setFormData] = useState({
@@ -1493,6 +1640,48 @@
             );
         };
 
+        const ContributionCard = ({ contribution, partners, isAdmin, onEdit, onDelete, onMerge }) => {
+            const [mergeTargetId, setMergeTargetId] = useState('');
+            const partnerName = (id) => partners.find(partner => partner.id === id)?.name || 'Unknown partner';
+            const targetName = contribution.submissionType === 'existing'
+                ? partnerName(contribution.partnerId)
+                : contribution.alternativeCompany;
+
+            return (
+                <div className="card p-4">
+                    <div className="flex justify-between items-start gap-3 mb-3">
+                        <div>
+                            <div className="font-600">{targetName}</div>
+                            <div className="text-xs text-gray-600">
+                                {contribution.submissionType === 'alternative' ? `Alternative to ${partnerName(contribution.alternativeToPartnerId)}` : 'Existing pipeline partner'}
+                            </div>
+                        </div>
+                        <span className="status-badge status-in-progress">{contribution.status}</span>
+                    </div>
+                    <div className="grid grid-cols-2 gap-3 text-sm mb-3">
+                        <div><span className="text-xs text-gray-600">Contributor</span><div>{contribution.contributorName}</div></div>
+                        <div><span className="text-xs text-gray-600">Contact</span><div>{contribution.contactName || 'Not provided'}</div></div>
+                        <div><span className="text-xs text-gray-600">Email</span><div>{contribution.contactEmail || 'Not provided'}</div></div>
+                        <div><span className="text-xs text-gray-600">Role</span><div>{contribution.contactRole || 'Not provided'}</div></div>
+                    </div>
+                    {contribution.leverage && <div className="text-sm mb-2"><span className="text-xs text-gray-600">Warm intro path</span><div>{contribution.leverage}</div></div>}
+                    {contribution.potentialOffering && <div className="text-sm mb-2"><span className="text-xs text-gray-600">Potential offering</span><div>{contribution.potentialOffering}</div></div>}
+                    {contribution.notes && <div className="text-sm text-gray-600 mb-3">{contribution.notes}</div>}
+                    {isAdmin && (
+                        <div className="flex flex-wrap gap-2 pt-3 border-t border-gray-200">
+                            <button onClick={() => onEdit(contribution)} className="btn btn-secondary">Review</button>
+                            <select value={mergeTargetId} onChange={(event) => setMergeTargetId(event.target.value)} className="flex-1">
+                                <option value="">Merge into...</option>
+                                {partners.map(partner => <option key={partner.id} value={partner.id}>{partner.name}</option>)}
+                            </select>
+                            <button onClick={() => mergeTargetId && onMerge(contribution, mergeTargetId)} className="btn btn-secondary" disabled={!mergeTargetId}>Merge</button>
+                            <button onClick={() => onDelete(contribution.id)} className="btn btn-danger">Delete</button>
+                        </div>
+                    )}
+                </div>
+            );
+        };
+
         // Problem Card Component
         const ProblemCard = ({ problem, onEdit }) => {
             const getStatusClass = (status) => {
@@ -1545,6 +1734,8 @@
         // Main App Component
         const App = () => {
             const [theme, setTheme] = useState(() => localStorage.getItem('hackathon_theme') || 'light');
+            const [isOnline, setIsOnline] = useState(() => navigator.onLine);
+            const [userRole, setUserRole] = useState(() => localStorage.getItem('hackathon_user_role') || 'Team Member');
             const [partners, setPartners] = usePersistentState('hackathon_partners', [
                 { id: '1', name: 'Sagini Contact 1', status: 'TO CONTACT', contact: '', problemBrief: false, dataShared: false, lastContact: '', followUpDate: '', risk: 'Nice-to-Have', notes: '' },
                 { id: '2', name: 'Sagini Contact 2', status: 'TO CONTACT', contact: '', problemBrief: false, dataShared: false, lastContact: '', followUpDate: '', risk: 'Nice-to-Have', notes: '' },
@@ -1561,6 +1752,8 @@
                 { id: '13', name: 'Leopard', status: 'AT RISK / BACKUP', contact: '', problemBrief: false, dataShared: false, lastContact: '', followUpDate: '', risk: 'Must-Have', notes: '' },
                 { id: '14', name: 'SMS Lewa', status: 'AT RISK / BACKUP', contact: '', problemBrief: false, dataShared: false, lastContact: '', followUpDate: '', risk: 'Must-Have', notes: '' }
             ]);
+
+            const [contributions, setContributions] = usePersistentState('hackathon_partner_contributions', []);
 
             const [problems, setProblems] = usePersistentState('hackathon_problems', [
                 {
@@ -1663,6 +1856,8 @@
             const [addBudgetOpen, setAddBudgetOpen] = useState(false);
             const [editBudgetOpen, setEditBudgetOpen] = useState(false);
             const [editingBudget, setEditingBudget] = useState(null);
+            const [contributionOpen, setContributionOpen] = useState(false);
+            const [editingContribution, setEditingContribution] = useState(null);
             const [taskFilter, setTaskFilter] = useState({
                 workstream: 'All',
                 priority: 'All',
@@ -1674,9 +1869,26 @@
                 localStorage.setItem('hackathon_theme', theme);
             }, [theme]);
 
+            useEffect(() => {
+                localStorage.setItem('hackathon_user_role', userRole);
+            }, [userRole]);
+
+            useEffect(() => {
+                const handleOnline = () => setIsOnline(true);
+                const handleOffline = () => setIsOnline(false);
+                window.addEventListener('online', handleOnline);
+                window.addEventListener('offline', handleOffline);
+                return () => {
+                    window.removeEventListener('online', handleOnline);
+                    window.removeEventListener('offline', handleOffline);
+                };
+            }, []);
+
             const toggleTheme = () => {
                 setTheme(currentTheme => currentTheme === 'light' ? 'dark' : 'light');
             };
+
+            const isAdmin = userRole === 'Admin' || userRole === 'Outreach Lead';
 
             useEffect(() => {
                 const normalizedPartners = partners.map(partner => ({
@@ -1750,6 +1962,46 @@
                 setPartners(partners.filter(p => p.id !== id));
             };
 
+            const handleAddContribution = (data) => {
+                setContributions(currentContributions => [...currentContributions, {
+                    id: Date.now().toString(),
+                    ...data,
+                    status: 'Submitted',
+                    submittedAt: new Date().toISOString()
+                }]);
+            };
+
+            const handleUpdateContribution = (contribution) => {
+                if (!isAdmin) return;
+                setContributions(currentContributions => currentContributions.map(item => item.id === contribution.id ? contribution : item));
+                setEditingContribution(null);
+            };
+
+            const handleDeleteContribution = (id) => {
+                if (!isAdmin || !confirm('Delete this partner contribution?')) return;
+                setContributions(currentContributions => currentContributions.filter(item => item.id !== id));
+            };
+
+            const handleMergeContribution = (contribution, targetPartnerId) => {
+                if (!isAdmin) return;
+                const summary = [
+                    `Contribution from ${contribution.contributorName} (${contribution.contributorEmail})`,
+                    contribution.contactName && `Contact: ${contribution.contactName}`,
+                    contribution.contactEmail && `Email: ${contribution.contactEmail}`,
+                    contribution.contactChannel && `LinkedIn / Phone: ${contribution.contactChannel}`,
+                    contribution.contactRole && `Role: ${contribution.contactRole}`,
+                    contribution.relationshipHistory && `Relationship: ${contribution.relationshipHistory}`,
+                    contribution.leverage && `Leverage: ${contribution.leverage}`,
+                    contribution.potentialOffering && `Offering: ${contribution.potentialOffering}`,
+                    contribution.notes && `Notes: ${contribution.notes}`
+                ].filter(Boolean).join('\n');
+                setPartners(currentPartners => currentPartners.map(partner => partner.id === targetPartnerId
+                    ? { ...partner, contact: partner.contact || contribution.contactName, notes: [partner.notes, summary].filter(Boolean).join('\n\n') }
+                    : partner
+                ));
+                setContributions(currentContributions => currentContributions.filter(item => item.id !== contribution.id));
+            };
+
             const handleAddTask = (data) => {
                 const newTask = {
                     id: Date.now().toString(),
@@ -1816,6 +2068,7 @@
                     problems,
                     tasks,
                     budget,
+                    contributions,
                     resources,
                     exportDate: new Date().toISOString()
                 };
@@ -1839,7 +2092,9 @@
                                     <span className="inline-block bg-red-100 text-red-700 px-3 py-1 text-xs font-600 rounded">
                                         LIVE PLANNING
                                     </span>
-                                    <span className="text-xs text-gray-500">Saved locally</span>
+                                    <span className={`text-xs ${isOnline ? 'text-gray-500' : 'text-orange-600'}`}>
+                                        {isOnline ? 'Saved locally' : 'Offline - saved locally'}
+                                    </span>
                                 </div>
                             </div>
                             <div className="flex gap-3">
@@ -1847,7 +2102,13 @@
                                 <button onClick={() => setAddPartnerOpen(true)} className="btn btn-primary">+ Add Partner</button>
                                 <button onClick={() => setAddProblemOpen(true)} className="btn btn-primary">+ Add Problem</button>
                                 <button onClick={() => setAddBudgetOpen(true)} className="btn btn-primary">+ Add Budget</button>
+                                <button onClick={() => setContributionOpen(true)} className="btn btn-primary">+ Team Contribution</button>
                                 <button onClick={handleExport} className="btn btn-secondary btn-export">Export</button>
+                                <select value={userRole} onChange={(event) => setUserRole(event.target.value)} aria-label="Current workspace role" className="role-select">
+                                    <option>Team Member</option>
+                                    <option>Outreach Lead</option>
+                                    <option>Admin</option>
+                                </select>
                                 <button onClick={toggleTheme} className="btn theme-toggle" aria-label={`Switch to ${theme === 'light' ? 'dark' : 'light'} mode`}>
                                     <ThemeIcon isDark={theme === 'dark'} />
                                     <span>{theme === 'light' ? 'Dark mode' : 'Light mode'}</span>
@@ -1952,6 +2213,37 @@
                                     </div>
                                 ))}
                             </div>
+                        </div>
+
+                        {/* Team Contributions */}
+                        <div className="mb-8">
+                            <div className="flex justify-between items-center mb-4">
+                                <div>
+                                    <h2 className="section-title mb-1">TEAM PARTNER CONTRIBUTIONS</h2>
+                                    <p className="text-sm text-gray-600">Append-only submissions for warm contacts and alternative partner suggestions.</p>
+                                </div>
+                                <span className="status-badge status-draft">{isAdmin ? `${userRole} review access` : 'Team Member: submit only'}</span>
+                            </div>
+                            {contributions.length === 0 ? (
+                                <div className="card p-6 text-sm text-gray-600">No contributions submitted yet.</div>
+                            ) : (
+                                <div className="grid grid-cols-2 gap-4">
+                                    {contributions.map(contribution => (
+                                        <ContributionCard
+                                            key={contribution.id}
+                                            contribution={contribution}
+                                            partners={partners}
+                                            isAdmin={isAdmin}
+                                            onEdit={(item) => {
+                                                setEditingContribution(item);
+                                                setContributionOpen(true);
+                                            }}
+                                            onDelete={handleDeleteContribution}
+                                            onMerge={handleMergeContribution}
+                                        />
+                                    ))}
+                                </div>
+                            )}
                         </div>
 
                         {/* Problems */}
@@ -2211,12 +2503,31 @@
                     <EditProblemModal isOpen={editProblemOpen} onClose={() => setEditProblemOpen(false)} problem={editingProblem} onUpdate={handleUpdateProblem} onDelete={handleDeleteProblem} />
                     <BudgetModal isOpen={addBudgetOpen} onClose={() => setAddBudgetOpen(false)} onSave={handleAddBudget} onDelete={handleDeleteBudget} />
                     <BudgetModal isOpen={editBudgetOpen} onClose={() => setEditBudgetOpen(false)} budgetItem={editingBudget} onSave={handleUpdateBudget} onDelete={handleDeleteBudget} />
+                    <ContributionModal
+                        isOpen={contributionOpen}
+                        onClose={() => {
+                            setContributionOpen(false);
+                            setEditingContribution(null);
+                        }}
+                        onSave={editingContribution ? handleUpdateContribution : handleAddContribution}
+                        contribution={editingContribution}
+                        partners={partners}
+                        isAdmin={isAdmin}
+                    />
                 </div>
             );
         };
 
         // Render
         ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+
+        if ('serviceWorker' in navigator && window.location.protocol !== 'file:') {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('./service-worker.js').catch(error => {
+                    console.warn('Offline app caching is unavailable.', error);
+                });
+            });
+        }
     </script>
 </body>
 </html>

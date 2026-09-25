@@ -1,0 +1,9 @@
+{
+  "name": "Zindua Hackathon Master Planning Hub",
+  "short_name": "Hackathon Hub",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#FFFFFF",
+  "theme_color": "#E52E2E",
+  "description": "Offline-ready hackathon planning dashboard"
+}
