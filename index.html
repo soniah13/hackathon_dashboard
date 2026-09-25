@@ -187,6 +187,12 @@
             font-size: 14px;
         }
 
+        [data-theme="dark"] select,
+        [data-theme="dark"] select option {
+            background-color: var(--surface);
+            color: var(--text-primary);
+        }
+
         input:focus, select:focus, textarea:focus {
             outline: none;
             border-color: var(--accent);
@@ -2217,7 +2223,7 @@
                                 {['TO CONTACT', 'CONTACTED / AWAITING REPLY', 'IN DISCUSSIONS', 'CONFIRMED', 'AT RISK / BACKUP'].map(status => (
                                     <div key={status}>
                                         <div className="font-600 text-sm mb-4 text-gray-700 flex justify-between">
-                                            <span>{status === 'TO CONTACT' ? 'Sagini Contacts' : status}</span>
+                                            <span>{status === 'TO CONTACT' ? 'Potential Partners' : status}</span>
                                             <span className="text-gray-500">{partners.filter(p => p.status === status).length}</span>
                                         </div>
                                         {status === 'IN DISCUSSIONS' && (
