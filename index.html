@@ -892,7 +892,6 @@ I<html lang="en">
                 alternativeCompany: '',
                 alternativeToPartnerId: '',
                 contributorName: '',
-                contributorEmail: '',
                 contactName: '',
                 contactEmail: '',
                 contactChannel: '',
@@ -921,7 +920,7 @@ I<html lang="en">
                 const hasTarget = formData.submissionType === 'existing'
                     ? formData.partnerId
                     : formData.alternativeCompany.trim() && formData.alternativeToPartnerId;
-                if (!formData.contributorName.trim() || !formData.contributorEmail.trim() || !hasTarget) return;
+                if (!formData.contributorName.trim() || !hasTarget) return;
                 onSave(formData);
                 onClose();
             };
@@ -963,15 +962,9 @@ I<html lang="en">
                                 </div>
                             </>
                         )}
-                        <div className="grid grid-cols-2 gap-3">
-                            <div>
-                                <label className="block text-sm font-600 mb-2">Contributor Name</label>
-                                <input type="text" name="contributorName" value={formData.contributorName} onChange={handleChange} required disabled={isEditing && !isAdmin} />
-                            </div>
-                            <div>
-                                <label className="block text-sm font-600 mb-2">Contributor Email</label>
-                                <input type="email" name="contributorEmail" value={formData.contributorEmail} onChange={handleChange} required disabled={isEditing && !isAdmin} />
-                            </div>
+                        <div>
+                            <label className="block text-sm font-600 mb-2">Contributor Name</label>
+                            <input type="text" name="contributorName" value={formData.contributorName} onChange={handleChange} required disabled={isEditing && !isAdmin} />
                         </div>
                         <div className="grid grid-cols-2 gap-3">
                             <div>
@@ -1022,6 +1015,207 @@ I<html lang="en">
                         )}
                         <div className="flex gap-3 pt-4">
                             <button type="submit" className="btn btn-primary flex-1">{isEditing ? 'Save Review' : 'Submit Contribution'}</button>
+                            <button type="button" onClick={onClose} className="btn btn-secondary flex-1">Cancel</button>
+                        </div>
+                    </form>
+                </Modal>
+            );
+        };
+
+        const ContributionSectionModal = ({ isOpen, onClose, onChoose }) => {
+            const [section, setSection] = useState('partners');
+
+            const handleSubmit = (event) => {
+                event.preventDefault();
+                onChoose(section);
+                onClose();
+            };
+
+            return (
+                <Modal isOpen={isOpen} onClose={onClose} title="Choose a contribution section">
+                    <form onSubmit={handleSubmit} className="space-y-4">
+                        <div>
+                            <label className="block text-sm font-600 mb-2">Which section are you contributing to?</label>
+                            <select value={section} onChange={(event) => setSection(event.target.value)}>
+                                <option value="partners">Partners</option>
+                                <option value="problems">Problem Briefs</option>
+                                <option value="data">Data</option>
+                                <option value="tasks">Master Task Board</option>
+                                <option value="budget">Working Budget</option>
+                                <option value="resources">Resource Allocation</option>
+                            </select>
+                        </div>
+                        <div className="flex gap-3 pt-2">
+                            <button type="submit" className="btn btn-primary flex-1">Continue</button>
+                            <button type="button" onClick={onClose} className="btn btn-secondary flex-1">Cancel</button>
+                        </div>
+                    </form>
+                </Modal>
+            );
+        };
+
+        const SectionContributionModal = ({ isOpen, onClose, onSave, section, partners, problems, tasks, budget, resources }) => {
+            const emptyForm = { targetId: '', contributorName: '', changes: {} };
+            const [formData, setFormData] = useState(emptyForm);
+            const resourceGroups = [
+                { id: 'technicalMentors', label: 'Technical Mentors', confirmedKey: 'technicalMentorsConfirmed', targetKey: 'technicalMentorsRequired' },
+                { id: 'judges', label: 'Judges', confirmedKey: 'judgesConfirmed', targetKey: 'judgesRequired' },
+                { id: 'partners', label: 'Partners', confirmedKey: 'partnersConfirmed', targetKey: 'partnersTarget' },
+                { id: 'teams', label: 'Teams', confirmedKey: 'teamsConfirmed', targetKey: 'teamsExpected' },
+                { id: 'participants', label: 'Participants', confirmedKey: 'participantsRegistered', targetKey: 'participantsTarget' }
+            ];
+            const sectionLabels = {
+                problems: 'Problem Briefs',
+                data: 'Data',
+                tasks: 'Master Task Board',
+                budget: 'Working Budget',
+                resources: 'Resource Allocation'
+            };
+            const targets = {
+                problems: problems.map(problem => ({ id: problem.id, label: problem.title, item: problem })),
+                data: problems.map(problem => ({ id: problem.id, label: problem.title, item: problem })),
+                tasks: tasks.map(task => ({ id: task.id, label: task.title, item: task })),
+                budget: budget.map(item => ({ id: item.id, label: `${item.category}: ${item.item}`, item })),
+                resources: resourceGroups.map(group => ({
+                    id: group.id,
+                    label: group.label,
+                    item: { confirmed: resources[group.confirmedKey], target: resources[group.targetKey] },
+                    group
+                }))
+            }[section] || [];
+            const target = targets.find(item => String(item.id) === String(formData.targetId));
+            const fieldSets = {
+                problems: [
+                    { name: 'title', label: 'Problem Title', type: 'text' },
+                    { name: 'fullText', label: 'Problem Description', type: 'textarea' },
+                    { name: 'owner', label: 'Owner', type: 'text' },
+                    { name: 'organisation', label: 'Organisation', type: 'text' },
+                    { name: 'softwareComponent', label: 'Software Component', type: 'checkbox' },
+                    { name: 'dataScienceComponent', label: 'Data Science Component', type: 'checkbox' },
+                    { name: 'validationContact', label: 'Validation Contact', type: 'text' },
+                    { name: 'status', label: 'Status', type: 'select', options: ['Draft', 'Being Prepared', 'Ready', 'Blocked'] },
+                    { name: 'notes', label: 'Notes', type: 'textarea' }
+                ],
+                data: [
+                    { name: 'syntheticData', label: 'Synthetic Data Status', type: 'select', options: ['Not Started', 'In Progress', 'Ready'] },
+                    { name: 'realData', label: 'Real Data Status', type: 'select', options: ['Not Available', 'Awaiting Approval', 'Available'] },
+                    { name: 'notes', label: 'Data Notes', type: 'textarea' }
+                ],
+                tasks: [
+                    { name: 'title', label: 'Task Title', type: 'text' },
+                    { name: 'owner', label: 'Owner', type: 'text' },
+                    { name: 'workstream', label: 'Workstream', type: 'select', options: ['Partnerships', 'Challenge Design', 'Data', 'Technical', 'Operations', 'Marketing', 'Judging', 'Budget', 'Participant Management'] },
+                    { name: 'dueDate', label: 'Due Date', type: 'date' },
+                    { name: 'priority', label: 'Priority', type: 'select', options: ['Low', 'Medium', 'High', 'Critical'] },
+                    { name: 'status', label: 'Status', type: 'select', options: ['BACKLOG', 'TO DO — THIS WEEK', 'IN PROGRESS', 'BLOCKED', 'DONE'] },
+                    { name: 'description', label: 'Description', type: 'textarea' },
+                    { name: 'relatedPartner', label: 'Related Partner', type: 'partner' },
+                    { name: 'relatedProblem', label: 'Related Problem', type: 'problem' },
+                    { name: 'notes', label: 'Notes', type: 'textarea' }
+                ],
+                budget: [
+                    { name: 'category', label: 'Category', type: 'select', options: ['Venue', 'Catering', 'Prizes', 'Swag', 'Infrastructure', 'Contingency'] },
+                    { name: 'item', label: 'Item Description', type: 'text' },
+                    { name: 'estimated', label: 'Estimated Cost (KES)', type: 'number' },
+                    { name: 'actual', label: 'Actual Cost (KES)', type: 'number' },
+                    { name: 'fundingSource', label: 'Funding Source', type: 'text' },
+                    { name: 'status', label: 'Status', type: 'select', options: ['Planned', 'Quoted', 'Approved', 'Paid', 'Sponsored', 'Cancelled'] },
+                    { name: 'notes', label: 'Notes', type: 'textarea' }
+                ],
+                resources: [
+                    { name: 'confirmed', label: 'Confirmed', type: 'number' },
+                    { name: 'target', label: 'Target / Required', type: 'number' }
+                ]
+            };
+            const fields = fieldSets[section] || [];
+
+            useEffect(() => {
+                setFormData(emptyForm);
+            }, [section, isOpen]);
+
+            const handleFieldChange = (event) => {
+                const { name, value } = event.target;
+                setFormData(previous => ({ ...previous, changes: { ...previous.changes, [name]: value } }));
+            };
+
+            const handleSubmit = (event) => {
+                event.preventDefault();
+                const changes = Object.fromEntries(Object.entries(formData.changes).filter(([, value]) => value !== ''));
+                if (!target || !formData.contributorName.trim() || Object.keys(changes).length === 0) return;
+                onSave({
+                    section,
+                    targetId: target.id,
+                    targetLabel: target.label,
+                    resourceGroup: target.group,
+                    contributorName: formData.contributorName,
+                    changes
+                });
+                onClose();
+            };
+
+            const renderField = (field) => {
+                const value = formData.changes[field.name] ?? '';
+                const currentValue = target?.item[field.name];
+                const fieldId = `contribution-${section}-${field.name}`;
+                const currentText = currentValue === undefined || currentValue === '' ? 'Not set' : String(currentValue);
+                let input;
+
+                if (field.type === 'select' || field.type === 'partner' || field.type === 'problem') {
+                    const options = field.type === 'partner'
+                        ? partners.map(partner => ({ value: partner.id, label: partner.name }))
+                        : field.type === 'problem'
+                            ? problems.map(problem => ({ value: problem.id, label: problem.title }))
+                            : field.options.map(option => ({ value: option, label: option }));
+                    input = (
+                        <select id={fieldId} name={field.name} value={value} onChange={handleFieldChange}>
+                            <option value="">No change</option>
+                            {options.map(option => <option key={option.value} value={option.value}>{option.label}</option>)}
+                        </select>
+                    );
+                } else if (field.type === 'checkbox') {
+                    input = (
+                        <select id={fieldId} name={field.name} value={value} onChange={handleFieldChange}>
+                            <option value="">No change</option>
+                            <option value="true">Yes</option>
+                            <option value="false">No</option>
+                        </select>
+                    );
+                } else if (field.type === 'textarea') {
+                    input = <textarea id={fieldId} name={field.name} value={value} onChange={handleFieldChange} placeholder={`Current: ${currentText}`} rows="2" />;
+                } else {
+                    input = <input id={fieldId} type={field.type} name={field.name} value={value} onChange={handleFieldChange} placeholder={`Current: ${currentText}`} />;
+                }
+
+                return (
+                    <div key={field.name}>
+                        <label className="block text-sm font-600 mb-2" htmlFor={fieldId}>{field.label}</label>
+                        <div className="text-xs text-gray-600 mb-1">Current: {currentText}</div>
+                        {input}
+                    </div>
+                );
+            };
+
+            return (
+                <Modal isOpen={isOpen} onClose={onClose} title={`Contribute to ${sectionLabels[section] || 'Dashboard'}`}>
+                    <form onSubmit={handleSubmit} className="space-y-4">
+                        <div>
+                            <label className="block text-sm font-600 mb-2">Choose an item from {sectionLabels[section]}</label>
+                            <select value={formData.targetId} onChange={(event) => setFormData(previous => ({ ...previous, targetId: event.target.value, changes: {} }))} required>
+                                <option value="">Select an item</option>
+                                {targets.map(item => <option key={item.id} value={item.id}>{item.label}</option>)}
+                            </select>
+                        </div>
+                        {target && (
+                            <>
+                                <div>
+                                    <label className="block text-sm font-600 mb-2">Your Name</label>
+                                    <input type="text" value={formData.contributorName} onChange={(event) => setFormData(previous => ({ ...previous, contributorName: event.target.value }))} required />
+                                </div>
+                                {fields.map(renderField)}
+                            </>
+                        )}
+                        <div className="flex gap-3 pt-4">
+                            <button type="submit" className="btn btn-primary flex-1" disabled={!target}>Submit Contribution</button>
                             <button type="button" onClick={onClose} className="btn btn-secondary flex-1">Cancel</button>
                         </div>
                     </form>
@@ -1728,6 +1922,91 @@ I<html lang="en">
             );
         };
 
+        const SectionContributionCard = ({ contribution, isAdmin, onApply, onDelete }) => {
+            const sectionLabels = {
+                problems: 'Problem Briefs',
+                data: 'Data',
+                tasks: 'Master Task Board',
+                budget: 'Working Budget',
+                resources: 'Resource Allocation'
+            };
+            const fieldLabels = {
+                title: 'Title', fullText: 'Problem Description', owner: 'Owner', organisation: 'Organisation',
+                status: 'Status', notes: 'Notes', syntheticData: 'Synthetic Data Status', realData: 'Real Data Status',
+                workstream: 'Workstream', dueDate: 'Due Date', priority: 'Priority', description: 'Description',
+                relatedPartner: 'Related Partner ID', relatedProblem: 'Related Problem ID', category: 'Category',
+                item: 'Item', estimated: 'Estimated Cost', actual: 'Actual Cost', fundingSource: 'Funding Source',
+                confirmed: 'Confirmed', target: 'Target / Required'
+            };
+
+            return (
+                <div className="card p-4">
+                    <div className="flex justify-between items-start gap-3 mb-3">
+                        <div>
+                            <div className="text-xs text-gray-600">{sectionLabels[contribution.section]}</div>
+                            <div className="font-600">{contribution.targetLabel}</div>
+                            <div className="text-xs text-gray-600">Submitted by {contribution.contributorName}</div>
+                        </div>
+                        <span className={`status-badge ${contribution.status === 'Applied' ? 'status-ready' : 'status-in-progress'}`}>{contribution.status}</span>
+                    </div>
+                    <div className="space-y-2 text-sm">
+                        {Object.entries(contribution.changes || {}).map(([field, value]) => (
+                            <div key={field}>
+                                <span className="text-xs text-gray-600">{fieldLabels[field] || field}</span>
+                                <div>{String(value === 'true' ? 'Yes' : value === 'false' ? 'No' : value)}</div>
+                            </div>
+                        ))}
+                    </div>
+                    {isAdmin && (
+                        <div className="flex gap-2 pt-3 mt-3 border-t border-gray-200">
+                            {contribution.status !== 'Applied' && <button onClick={() => onApply(contribution)} className="btn btn-primary">Apply Update</button>}
+                            <button onClick={() => onDelete(contribution.id)} className="btn btn-danger">Delete</button>
+                        </div>
+                    )}
+                </div>
+            );
+        };
+
+        const ResourceRoster = ({ title, people, onAdd, onRemove }) => {
+            const [name, setName] = useState('');
+            const [skills, setSkills] = useState('');
+
+            const handleSubmit = (event) => {
+                event.preventDefault();
+                const trimmedName = name.trim();
+                if (!trimmedName || !skills.trim() || people.some(person => person.name.toLowerCase() === trimmedName.toLowerCase())) return;
+                onAdd({ name: trimmedName, skills: skills.trim() });
+                setName('');
+                setSkills('');
+            };
+
+            return (
+                <div className="mt-4 pt-4 border-t border-gray-200">
+                    <div className="text-xs font-600 text-gray-600 mb-2">{title} ({people.length} listed)</div>
+                    <form onSubmit={handleSubmit} className="space-y-2 mb-3">
+                        <input type="text" value={name} onChange={(event) => setName(event.target.value)} placeholder="Full name" aria-label={`${title} name`} required />
+                        <input type="text" value={skills} onChange={(event) => setSkills(event.target.value)} placeholder="Skills or areas of expertise" aria-label={`${title} skills`} required />
+                        <button type="submit" className="btn btn-secondary">Add to list</button>
+                    </form>
+                    {people.length === 0 ? (
+                        <div className="text-xs text-gray-500">No names listed yet.</div>
+                    ) : (
+                        <div className="space-y-2">
+                            {people.map(person => (
+                                <div key={person.id} className="flex justify-between items-start gap-3 text-sm">
+                                    <div className="min-w-0">
+                                        <div className="font-600">{person.name}</div>
+                                        <div className="text-xs text-gray-600">{person.skills}</div>
+                                    </div>
+                                    <button type="button" onClick={() => onRemove(person.id)} className="btn btn-secondary section-action">Remove</button>
+                                </div>
+                            ))}
+                        </div>
+                    )}
+                </div>
+            );
+        };
+
         // Problem Card Component
         const ProblemCard = ({ problem, onEdit }) => {
             const getStatusClass = (status) => {
@@ -1886,7 +2165,9 @@ I<html lang="en">
                 teamsExpected: 30,
                 teamsConfirmed: 0,
                 participantsTarget: 120,
-                participantsRegistered: 0
+                participantsRegistered: 0,
+                technicalMentors: [],
+                judges: []
             });
 
             const [searchTerm, setSearchTerm] = useState('');
@@ -1902,6 +2183,9 @@ I<html lang="en">
             const [addBudgetOpen, setAddBudgetOpen] = useState(false);
             const [editBudgetOpen, setEditBudgetOpen] = useState(false);
             const [editingBudget, setEditingBudget] = useState(null);
+            const [sectionChooserOpen, setSectionChooserOpen] = useState(false);
+            const [sectionContributionOpen, setSectionContributionOpen] = useState(false);
+            const [contributionSection, setContributionSection] = useState('partners');
             const [contributionOpen, setContributionOpen] = useState(false);
             const [editingContribution, setEditingContribution] = useState(null);
             const [taskFilter, setTaskFilter] = useState({
@@ -2017,6 +2301,32 @@ I<html lang="en">
                 }]);
             };
 
+            const handleApplyContribution = (contribution) => {
+                if (!isAdmin || contribution.status === 'Applied' || !confirm(`Apply this update to ${contribution.targetLabel}?`)) return;
+                const changes = Object.fromEntries(Object.entries(contribution.changes || {}).map(([field, value]) => [
+                    field,
+                    value === 'true' ? true : value === 'false' ? false : value
+                ]));
+
+                if (contribution.section === 'problems' || contribution.section === 'data') {
+                    setProblems(currentProblems => currentProblems.map(problem => problem.id === contribution.targetId ? { ...problem, ...changes } : problem));
+                } else if (contribution.section === 'tasks') {
+                    setTasks(currentTasks => currentTasks.map(task => task.id === contribution.targetId ? { ...task, ...changes } : task));
+                } else if (contribution.section === 'budget') {
+                    setBudget(currentBudget => currentBudget.map(item => item.id === contribution.targetId ? { ...item, ...changes } : item));
+                } else if (contribution.section === 'resources' && contribution.resourceGroup) {
+                    const resourceChanges = {};
+                    if (changes.confirmed !== undefined) resourceChanges[contribution.resourceGroup.confirmedKey] = Number(changes.confirmed) || 0;
+                    if (changes.target !== undefined) resourceChanges[contribution.resourceGroup.targetKey] = Number(changes.target) || 0;
+                    setResources(currentResources => ({ ...currentResources, ...resourceChanges }));
+                }
+
+                setContributions(currentContributions => currentContributions.map(item => item.id === contribution.id
+                    ? { ...item, status: 'Applied', appliedAt: new Date().toISOString() }
+                    : item
+                ));
+            };
+
             const handleUpdateContribution = (contribution) => {
                 if (!isAdmin) return;
                 setContributions(currentContributions => currentContributions.map(item => item.id === contribution.id ? contribution : item));
@@ -2024,7 +2334,7 @@ I<html lang="en">
             };
 
             const handleDeleteContribution = (id) => {
-                if (!isAdmin || !confirm('Delete this partner contribution?')) return;
+                if (!isAdmin || !confirm('Delete this contribution?')) return;
                 setContributions(currentContributions => currentContributions.filter(item => item.id !== id));
             };
 
@@ -2106,6 +2416,23 @@ I<html lang="en">
 
             const handleResourceChange = (field, value) => {
                 setResources({ ...resources, [field]: Math.max(0, Number(value) || 0) });
+            };
+
+            const handleAddResourcePerson = (roster, person) => {
+                setResources(currentResources => ({
+                    ...currentResources,
+                    [roster]: [...(Array.isArray(currentResources[roster]) ? currentResources[roster] : []), {
+                        id: Date.now().toString(),
+                        ...person
+                    }]
+                }));
+            };
+
+            const handleRemoveResourcePerson = (roster, id) => {
+                setResources(currentResources => ({
+                    ...currentResources,
+                    [roster]: (Array.isArray(currentResources[roster]) ? currentResources[roster] : []).filter(person => person.id !== id)
+                }));
             };
 
             const handleExport = () => {
@@ -2271,12 +2598,12 @@ I<html lang="en">
                         <div className="mb-8">
                             <div className="section-heading-row">
                                 <div>
-                                    <h2 className="section-title mb-1">TEAM PARTNER CONTRIBUTIONS</h2>
-                                    <p className="text-sm text-gray-600">Append-only submissions for warm contacts and alternative partner suggestions.</p>
+                                    <h2 className="section-title mb-1">TEAM CONTRIBUTIONS</h2>
+                                    <p className="text-sm text-gray-600">Submit suggested updates for any dashboard section.</p>
                                 </div>
                                 <div className="flex items-center gap-3">
                                     <span className="status-badge status-draft">{isAdmin ? `${userRole} review access` : 'Team Member: submit only'}</span>
-                                    <button onClick={() => setContributionOpen(true)} className="btn btn-primary section-action">+ Team Contribution</button>
+                                    <button onClick={() => setSectionChooserOpen(true)} className="btn btn-primary section-action">+ Team Contribution</button>
                                 </div>
                             </div>
                             {contributions.length === 0 ? (
@@ -2284,18 +2611,28 @@ I<html lang="en">
                             ) : (
                                 <div className="grid grid-cols-2 gap-4">
                                     {contributions.map(contribution => (
-                                        <ContributionCard
-                                            key={contribution.id}
-                                            contribution={contribution}
-                                            partners={partners}
-                                            isAdmin={isAdmin}
-                                            onEdit={(item) => {
-                                                setEditingContribution(item);
-                                                setContributionOpen(true);
-                                            }}
-                                            onDelete={handleDeleteContribution}
-                                            onMerge={handleMergeContribution}
-                                        />
+                                        contribution.section ? (
+                                            <SectionContributionCard
+                                                key={contribution.id}
+                                                contribution={contribution}
+                                                isAdmin={isAdmin}
+                                                onApply={handleApplyContribution}
+                                                onDelete={handleDeleteContribution}
+                                            />
+                                        ) : (
+                                            <ContributionCard
+                                                key={contribution.id}
+                                                contribution={contribution}
+                                                partners={partners}
+                                                isAdmin={isAdmin}
+                                                onEdit={(item) => {
+                                                    setEditingContribution(item);
+                                                    setContributionOpen(true);
+                                                }}
+                                                onDelete={handleDeleteContribution}
+                                                onMerge={handleMergeContribution}
+                                            />
+                                        )
                                     ))}
                                 </div>
                             )}
@@ -2518,6 +2855,12 @@ I<html lang="en">
                                     <div className="w-full bg-gray-200 rounded-full h-2">
                                         <div className="bg-blue-600 h-2 rounded-full" style={{width: `${(resources.technicalMentorsConfirmed / resources.technicalMentorsRequired) * 100}%`}}></div>
                                     </div>
+                                    <ResourceRoster
+                                        title="Confirmed technical mentors"
+                                        people={Array.isArray(resources.technicalMentors) ? resources.technicalMentors : []}
+                                        onAdd={(person) => handleAddResourcePerson('technicalMentors', person)}
+                                        onRemove={(id) => handleRemoveResourcePerson('technicalMentors', id)}
+                                    />
                                 </div>
                                 <div className="card p-6">
                                     <div className="text-sm font-600 mb-4">Judges</div>
@@ -2534,6 +2877,12 @@ I<html lang="en">
                                     <div className="w-full bg-gray-200 rounded-full h-2">
                                         <div className="bg-green-600 h-2 rounded-full" style={{width: `${(resources.judgesConfirmed / resources.judgesRequired) * 100}%`}}></div>
                                     </div>
+                                    <ResourceRoster
+                                        title="Confirmed judges"
+                                        people={Array.isArray(resources.judges) ? resources.judges : []}
+                                        onAdd={(person) => handleAddResourcePerson('judges', person)}
+                                        onRemove={(id) => handleRemoveResourcePerson('judges', id)}
+                                    />
                                 </div>
                                 <div className="card p-6">
                                     <div className="text-sm font-600 mb-4">Participants</div>
@@ -2564,6 +2913,26 @@ I<html lang="en">
                     <EditProblemModal isOpen={editProblemOpen} onClose={() => setEditProblemOpen(false)} problem={editingProblem} onUpdate={handleUpdateProblem} onDelete={handleDeleteProblem} />
                     <BudgetModal isOpen={addBudgetOpen} onClose={() => setAddBudgetOpen(false)} onSave={handleAddBudget} onDelete={handleDeleteBudget} />
                     <BudgetModal isOpen={editBudgetOpen} onClose={() => setEditBudgetOpen(false)} budgetItem={editingBudget} onSave={handleUpdateBudget} onDelete={handleDeleteBudget} />
+                    <ContributionSectionModal
+                        isOpen={sectionChooserOpen}
+                        onClose={() => setSectionChooserOpen(false)}
+                        onChoose={(section) => {
+                            setContributionSection(section);
+                            if (section === 'partners') setContributionOpen(true);
+                            else setSectionContributionOpen(true);
+                        }}
+                    />
+                    <SectionContributionModal
+                        isOpen={sectionContributionOpen}
+                        onClose={() => setSectionContributionOpen(false)}
+                        onSave={handleAddContribution}
+                        section={contributionSection}
+                        partners={partners}
+                        problems={problems}
+                        tasks={tasks}
+                        budget={budget}
+                        resources={resources}
+                    />
                     <ContributionModal
                         isOpen={contributionOpen}
                         onClose={() => {
